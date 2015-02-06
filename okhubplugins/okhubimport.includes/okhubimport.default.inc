@@ -12,11 +12,11 @@ if (!defined('OKHUB_API_ENVIRONMENT')) define('OKHUB_API_ENVIRONMENT', 'wordpres
 
 define('OKHUB_IMPORT_DEFAULT_DATASET_PUBLIC', 'hub');
 define('OKHUB_IMPORT_DEFAULT_DATASET_ADMIN', 'hub');
-define('OKHUB_IMPORT_IMPORT_USER', 'OKHUB');
+define('OKHUB_IMPORT_IMPORT_USER', 'IDS');
 define('OKHUB_IMPORT_CATEGORY_LEVELS', 2);
 define('OKHUB_IMPORT_IMPORT_RECURRENCE_ASSETS', 'daily');
 define('OKHUB_IMPORT_IMPORT_RECURRENCE_CATEGORIES', 'monthly');
-define('OKHUB_IMPORT_USER_EMAIL','api@okhub.org');
+define('OKHUB_IMPORT_USER_EMAIL','api@ids.ac.uk');
 define('OKHUB_IMPORT_MENU_TITLE', 'OKHUB Import');
 // This might be defined in IDS Expose, too.
 if (!defined('OKHUB_IMPORT_TAXONOMY')) define('OKHUB_IMPORT_TAXONOMY', 'okhubimport_taxonomy');

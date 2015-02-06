@@ -9,7 +9,7 @@ function okhubimport_general_page() {
   ?>
   <div class="wrap">
   <div id="icon-edit-pages" class="icon32"><br /></div>
-  <div id="ids-logo"><a href="http://www.okhub.org" target="_blank"><img src="http://serp-p.pids.gov.ph/home/images/okhub-logo200.png"></a></div>
+  <div id="ids-logo"><a href="http://api.ids.ac.uk" target="_blank"><img src="http://serp-p.pids.gov.ph/home/images/okhub-logo200.png"></a></div>
   <h2><?php _e('OKHUB Import Plugin'); ?></h2>
   <br /><br />
   <ul class="ids-category-list">

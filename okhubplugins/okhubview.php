@@ -23,7 +23,7 @@ License: GPLv3
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-//error_reporting(E_ERROR | E_PARSE);
+error_reporting(E_ERROR | E_PARSE);
 if (!defined('OKHUB_API_ENVIRONMENT')) define('OKHUB_API_ENVIRONMENT', 'wordpress');
 if (!defined('OKHUB_API_LIBRARY_PATH')) define('OKHUB_API_LIBRARY_PATH', dirname(dirname(__FILE__)) . '/okhubwrapper/');
 if (file_exists(OKHUB_API_LIBRARY_PATH) && is_readable(OKHUB_API_LIBRARY_PATH)) {
@@ -307,7 +307,7 @@ function okhubview_help_page() {
   <?php _e('To use the plugin, you must obtain a unique Token-GUID or key for the API. Please register for your API key <a href="http://api.okhub.ac.uk/accounts/register/" target="_new">here</a>. Once obtained, enter this key into the IDS API Token-GUID (key) section of the IDS Plugin Settings.'); ?>
   </p>
   <p>
-  <?php _e('The OkHUb API package actually has two plugins on offer, both allow the administrator to select content from'); ?> <a href="http://www.eldis.org/" target="_new">Eldis</a>, <a href="http://www.bridge.okhub.ac.uk/" target="_new">BRIDGE</a> <?php _e('or both collections, and bring relevant content easily into the site.'); ?>
+  <?php _e('The IDS API package actually has two plugins on offer, both allow the administrator to select content from'); ?> <a href="http://www.eldis.org/" target="_new">Eldis</a>, <a href="http://www.bridge.okhub.ac.uk/" target="_new">BRIDGE</a> <?php _e('or both collections, and bring relevant content easily into the site.'); ?>
   </p>
   <b><?php _e('OKHUB View plugin'); ?></b>
   <p>
@@ -386,6 +386,7 @@ function okhubview_add_javascript($hook) {
     $api_key = okhubapi_variable_get('okhubview', 'api_key', '');
     $api_key_validated = okhubapi_variable_get('okhubview', 'api_key_validated', FALSE);
     $default_dataset = okhubapi_variable_get('okhubview', 'default_dataset', OKHUB_IMPORT_DEFAULT_DATASET_ADMIN);
+    $okhub_datasets = array('hub');
     foreach ($okhub_datasets as $dataset) {
       $countries[$dataset] = okhubapi_variable_get('okhubview', $dataset . '_countries_assets', array());
       $regions[$dataset] = okhubapi_variable_get('okhubview', $dataset . '_regions_assets', array());

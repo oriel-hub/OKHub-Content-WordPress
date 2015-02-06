@@ -67,6 +67,11 @@ function okhubview_render_form() {
 		<p>
       <?php printf(__('This plugin provides access to the OKHub datasets via the Open Knowledge Hub API (<a href="%s" target="_new">%s</a>).'), OKHUB_API_HOME_URL, OKHUB_API_HOME_URL); ?>
       <br />
+      <br /><!--
+      <?php _e(); ?>
+      <br />
+      <?php _e(); ?>-->
+      <br />
       <br />
       <i>
       <?php _e('Please look through all the tabs on this page to set your configuration options. Changes will only be effective after submitting them by clicking on the "Save changes" button.'); ?></i>
@@ -229,7 +234,7 @@ function okhubview_render_form() {
         </tr>-->
 
         <!-- Exclude URIs -->
-        <tr>
+        <!--<tr>
           <th scope="row"><?php _e('Exclude URIs'); ?></th>
           <td>
             <input type="text" size="57" name="okhubview_options[exclude_uris]" value="<?php echo okhubapi_variable_get('okhubview', 'exclude_uris', get_bloginfo('url')); ?>" /><br />
@@ -238,7 +243,7 @@ function okhubview_render_form() {
             <?php _e('This filter can be used, for instance, to avoid displaying resources that are originated from this site.'); ?><br />
             <?php _e('Example: <i>http://www.worldbank.org/en/news, undp.org</i> would exclude WB\'s press releases and all resources from servers with undp.org as domain name.'); ?></p>
           </td>
-        </tr>
+        </tr>-->
 
         <!-- Authors -->
         <tr>
