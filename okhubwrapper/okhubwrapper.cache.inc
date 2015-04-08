@@ -1,7 +1,7 @@
 <?php
 
 /**
-* IdsApiCache Class.
+* OkhubApiCache Class.
 * This class provides a simple file-based cache mechanism.
 *
 * The code is adapted from Pettakam, a simple cache library developed by Vimal Sudhan <me@vimalsudhan.com>
@@ -10,8 +10,8 @@
 * @license Dual-licensed (Apache License 2.0 and GNU GPL 3.0)
 * http://code.vimalsudhan.com/pettakam
 */
-
-class IdsApiCache{
+//IdsApiCache
+class OkhubApiCache{
 	
 	private $repository = OKHUB_API_CACHE_DIR;
 	private $file_extension = 'data';
@@ -32,7 +32,7 @@ class IdsApiCache{
         return TRUE;
       }
       else {
-        okhubapi_register_error('idsapi', __('Cache directory is not writable: ') . $this->repository, 'IdsApiCache::dir_writable', 'warning');
+        okhubapi_register_error('okhubapi', __('Cache directory is not writable: ') . $this->repository, 'IdsApiCache::dir_writable', 'warning');
         return FALSE;
       }
     }
@@ -41,7 +41,7 @@ class IdsApiCache{
         return TRUE;
       }
       else {
-        idsapi_register_error('idsapi', __('Cache directory could not be created: ') . $this->repository, 'IdsApiCache::dir_writable', 'warning');
+        okhubapi_register_error('okhubapi', __('Cache directory could not be created: ') . $this->repository, 'IdsApiCache::dir_writable', 'warning');
         return FALSE;
       }
     }

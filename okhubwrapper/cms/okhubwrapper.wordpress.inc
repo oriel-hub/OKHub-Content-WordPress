@@ -12,8 +12,9 @@ global $okhub_exclude;
 global $okhub_sources;
 
 $okhub_datasets = array('hub');
-$okhub_assets = array('documents','organisations');
-$okhub_categories = array('countries', 'regions');
+//$okhub_assets = array('documents','organisations');
+$okhub_assets = array('documents');
+$okhub_categories = array('countries', 'regions','themes');
 $okhub_sources = array('opendocs','eldis','observaction','bridge','heart','pids','ccccc','ella','serpp');
 global $okhubapi_errors;
 $okhubapi_errors = array();

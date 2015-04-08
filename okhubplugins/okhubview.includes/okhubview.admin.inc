@@ -275,7 +275,7 @@ function okhubview_render_form() {
             <p class="description">
             <?php _e('Query string to be appended to the API URL.'); ?><br />
             <?php _e('Use comma-separated pairs of unencoded query fields and values (example: <i>country=Argentina, keyword=climate change</i>).'); ?><br />
-            <?php printf(__('Please check the <a href="%s" target="_new">online documentation</a> for a list of available query fields.'), IDS_API_SEARCH_FIELDS_URL); ?>
+            <?php printf(__('Please check the <a href="%s" target="_new">online documentation</a> for a list of available query fields.'), OKHUB_API_SEARCH_FIELDS_URL); ?>
            </p>
           </td>
         </tr>

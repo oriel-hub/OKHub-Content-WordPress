@@ -7,25 +7,26 @@
 
 require_once('okhubwrapper.cache.inc');
 
-global $idsapi_cache;
-$idsapi_cache = new IdsApiCache(array('repository' => dirname(__FILE__) . '/' . OKHUB_API_CACHE_DIR));
+global $okhubapi_cache;
+$idsapi_cache = new OkhubApiCache(array('repository' => dirname(__FILE__) . '/' . OKHUB_API_CACHE_DIR));
 
 /**
 * Add data to the cache.
+* before its idsapi
 */
-function idsapi_cache_set($cache_id, $data, $bin, $expire) {
-  global $idsapi_cache;
+function okhubapi_cache_set($cache_id, $data, $bin, $expire) {
+  global $okhubapi_cache;
   $idsapi_cache->store($cache_id, $data, $expire, $bin);
 }
 
 /**
 * Get data from the cache.
 */
-function idsapi_cache_get($cache_id, $bin) {
-  global $idsapi_cache;
+function okhubapi_cache_get($cache_id, $bin) {
+  global $okhubapi_cache;
   $ret = OKHUB_API_USE_CACHE;
   if ($ret) {
-    $ret = $idsapi_cache->get($cache_id);
+    $ret = $okhubapi_cache->get($cache_id);
   }
   return $ret;
 }
@@ -33,16 +34,16 @@ function idsapi_cache_get($cache_id, $bin) {
 /**
 * Clear data from one cache id.
 */
-function idsapi_cache_clear($cache_id) {
-  global $idsapi_cache;
-  $idsapi_cache->clear($cache_id);
+function okhubapi_cache_clear($cache_id) {
+  global $okhubapi_cache;
+  $okhubapi_cache->clear($cache_id);
 }
 
 /**
 * Flush data from the cache.
 */
-function idsapi_cache_flush() {
-  global $idsapi_cache;
-  $idsapi_cache->clear_all();
+function okhubapi_cache_flush() {
+  global $okhubapi_cache;
+  $okhubapi_cache->clear_all();
 }
 

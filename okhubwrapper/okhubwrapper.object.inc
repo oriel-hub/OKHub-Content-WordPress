@@ -132,7 +132,7 @@ class OkhubApiObject {
       $this->name = $object['object_name'];
     }
     else {
-      $this->name = $this->title;
+      //$this->name = $this->title;
     }
   }
 
