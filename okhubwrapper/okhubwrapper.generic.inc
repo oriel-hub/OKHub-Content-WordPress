@@ -8,7 +8,7 @@
 require_once('okhubwrapper.cache.inc');
 
 global $okhubapi_cache;
-$idsapi_cache = new OkhubApiCache(array('repository' => dirname(__FILE__) . '/' . OKHUB_API_CACHE_DIR));
+$okhubapi_cache = new OkhubApiCache(array('repository' => dirname(__FILE__) . '/' . OKHUB_API_CACHE_DIR));
 
 /**
 * Add data to the cache.
@@ -16,7 +16,7 @@ $idsapi_cache = new OkhubApiCache(array('repository' => dirname(__FILE__) . '/' 
 */
 function okhubapi_cache_set($cache_id, $data, $bin, $expire) {
   global $okhubapi_cache;
-  $idsapi_cache->store($cache_id, $data, $expire, $bin);
+  $okhub_cache->store($cache_id, $data, $expire, $bin);
 }
 
 /**

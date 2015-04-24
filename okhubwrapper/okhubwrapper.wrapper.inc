@@ -470,7 +470,7 @@ class OkhubApiWrapper {
     static $items = array();
     $cid = $this->cacheId();
     if (!isset($items[$cid])) {
-      $items[$cid] = idsapi_cache_get($cid, OKHUB_API_CACHE_REQUESTS);
+      $items[$cid] = okhub_cache_get($cid, OKHUB_API_CACHE_REQUESTS);
     }
     return $items[$cid];
   }
@@ -482,10 +482,10 @@ class OkhubApiWrapper {
   protected function cacheSet($data) {
     if (!$data[1]) {
       // If we get an empty response we set a 5 min. temporary cache to avoid making repeated failed requests in a short period of time.
-      idsapi_cache_set($this->cacheId(), $data, OKHUB_API_CACHE_REQUESTS, 300);
+      okhub_cache_set($this->cacheId(), $data, OKHUB_API_CACHE_REQUESTS, 300);
     }
     else {
-      idsapi_cache_set($this->cacheId(), $data, OKHUB_API_CACHE_REQUESTS, OKHUB_API_DEFAULT_CACHE_TIME);
+      okhub_cache_set($this->cacheId(), $data, OKHUB_API_CACHE_REQUESTS, OKHUB_API_DEFAULT_CACHE_TIME);
     }
   }
 
@@ -501,14 +501,14 @@ class OkhubApiWrapper {
   * Delete the cache entry for the current request.
   */
   public function cacheClear() {
-    idsapi_cache_clear($this->cacheId());
+    okhub_cache_clear($this->cacheId());
   }
 
   /**
   * Delete all the cache entries.
   */
   public function cacheFlush() {
-    idsapi_cache_flush();
+    okhubapi_cache_flush();
   }
 
 } // Class OKhubApiWrapper
