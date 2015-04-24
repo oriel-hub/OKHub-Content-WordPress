@@ -41,14 +41,14 @@
 			<?php if ( is_single() ) : ?>
       <div class="ids-fields">
         <ul>
-          <?php ids_field('authors', '<li class="ids-field">' . __('Authors: '), '</li>'); ?>
-          <?php ids_field('date_updated', '<li class="ids-field">' . __('Updated on: '), '</li>', array('date', 'Y/m/d')); ?>
+          <?php okhub_field('authors', '<li class="ids-field">' . __('Authors: '), '</li>'); ?>
+          <?php okhub_field('date_updated', '<li class="ids-field">' . __('Updated on: '), '</li>', array('date', 'Y/m/d')); ?>
           <!-- Alternatively: ids_field('date_updated', '<li class="ids-field">' . __('Updated on: '), '</li>', 'date') would use the date format in Wordpress' settings.  -->
-          <?php ids_field('urls', '<li class="ids-field">' . __('External URLs: '), '</li>', 'link'); ?>
+          <?php okhub_field('urls', '<li class="ids-field">' . __('External URLs: '), '</li>', 'link'); ?>
           <!-- Alternatively: ids_field('urls', '<li class="ids-field">' . __('External URLs: '), '</li>', array('link', 'Some text')) can be used to display a text in the link instead of the URL -->
-          <?php ids_categories('countries', '<li class="ids-field">' . __('Countries: '), '</li>'); ?>
-          <?php ids_categories('regions', '<li class="ids-field">' . __('Regions: '), '</li>'); ?>
-          <?php ids_categories('themes', '<li class="ids-field">' . __('Themes: '), '</li>'); ?>
+          <?php okhub_categories('countries', '<li class="ids-field">' . __('Countries: '), '</li>'); ?>
+          <?php okhub_categories('regions', '<li class="ids-field">' . __('Regions: '), '</li>'); ?>
+          <?php okhub_categories('themes', '<li class="ids-field">' . __('Themes: '), '</li>'); ?>
         </ul>
       </div>
 			<?php endif; // is_single() ?>
