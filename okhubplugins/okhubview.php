@@ -8,7 +8,7 @@ Author: Modified and customised by Ronald Yacat for the Institute of Development
 Author URI: http://www.okhub.org/
 License: GPLv3
 
-    Copyright 2014  Institute of Development Studies (IDS)
+    Copyright 2015  Institute of Development Studies (IDS)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ License: GPLv3
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-error_reporting(-1);
+//error_reporting(-1);
 if (!defined('OKHUB_API_ENVIRONMENT')) define('OKHUB_API_ENVIRONMENT', 'wordpress');
 if (!defined('OKHUB_API_LIBRARY_PATH')) define('OKHUB_API_LIBRARY_PATH', dirname(dirname(__FILE__)) . '/okhubwrapper/');
 if (file_exists(OKHUB_API_LIBRARY_PATH) && is_readable(OKHUB_API_LIBRARY_PATH)) {
@@ -231,7 +231,7 @@ function okhubview_general_page() {
   ?>
   <div class="wrap">
   <div id="icon-edit-pages" class="icon32"><br /></div>
-  <div id="okhub-logo"><a href="http://api.okhub.org" target="_blank"><img src="http://api.okhub.ac.uk/docs/wp-content/uploads/2012/01/KS_powered.gif"></a></div>
+  <div id="okhub-logo"><a href="http://www.okhub.org" target="_blank"><img src="http://serp-p.pids.gov.ph/home/images/okhub-logo200.png"></a></div>
   <h2>OKHUB View Plugin </h2>
   <br /><br />
   <u class="okhub-category-list">
@@ -394,6 +394,7 @@ function okhubview_add_javascript($hook) {
     }
     $categories = array('countries' => $countries, 'regions' => $regions, 'themes' => $themes);
     okhub_init_javascript('okhubview', $api_key, $api_key_validated, $default_dataset, $categories);
+
   }
 }
 
@@ -450,7 +451,7 @@ function okhubview_asset_content($content) {
   global $post;
   global $wp_query;
   if (isset($wp_query->query_vars['object_id'])) { // It's a request for a single asset.
-    if ($post->post_type == 'page') { // The content of the general page (okhubview_documents / okhubview_organisations)
+    if ($post->post_type == 'page') { // The content of the general page (okhubview_documents )
       $content = '';
     }
   }
@@ -469,8 +470,8 @@ function okhubview_assets($dataset, $type) {
       if (!empty($assets)) {
        foreach ($assets as $id=>$asset) {
             if ($id == "results"){ //make sure that its the results not the metadata
-		    foreach($asset as $i=>$ass){	
-			$posts[] = okhubview_create_post($dataset, $ass, $type);
+		    foreach($asset as $i=>$ass){
+			$posts[] = okhubview_create_post($dataset, $ass, $type, $ass['object_id']);
 			$wp_query->post = $posts[0];
 			$wp_query->posts = $posts;
 		 }
@@ -482,6 +483,7 @@ function okhubview_assets($dataset, $type) {
     $wp_query->is_singular = 1;
     $wp_query->found_posts = 0;
     $wp_query->post_count = 1;
+
   }
   else { // It's a general request.
     $filters = array();
@@ -574,13 +576,14 @@ function okhubview_create_post($dataset, $asset, $type,$object_id) {
   		//break;
   	}
   } 
+  //error_log(json_encode($asset),0);
   //$url = $dataset . 'view_' . $type;
-  $url = "page_id";
+  $url = "";
   $post_name = sanitize_title($asset[$source]['title']);
   $default_language = okhubapi_variable_get('okhubview', 'language', OKHUB_VIEW_DEFAULT_LANGUAGE);
   $title = $asset[$source]['title'];
   $description = $asset[$source]['description'];
-  $url_args = "?pages_id=".$id."&object_id=".$object_id;
+  $url_args = "?page_id=".$id."&object_id=".$object_id;
   $post = array (
             'ID' => $id,
             'post_author' => 1,
@@ -592,43 +595,42 @@ function okhubview_create_post($dataset, $asset, $type,$object_id) {
             'comment_status' => 'closed',
             'ping_status' => 'closed',
             /*'post_name' => $post_name,*/
-            'post_name' => $id,
+            'post_name' => $object_id,
             'post_parent' => 0,
-            'guid' => home_url($url) . '/' . $post_name,
-            /*'guid' => home_url($url) . '/' . $url_args,*/
+            /*'guid' => home_url($url) . '/' . $post_name,*/
+            'guid' => home_url($url) . '/' . $url_args,
             'menu_order' => 0,
             /*'post_type' => 'okhub_' . $type,*/
             'post_type' => 'page_id',
             'comment_count' => 0,
         );
   //$post['object_id'] = $asset->object_id['hub'];
+
   $post['object_id'] = $object_id;
-  if (isset($asset->site)) { $post['site'] = $asset[$source]['site']; }
-  if (isset($asset->timestamp)) { $post['timestamp'] = $asset[$source]['timestamp']; }
-  if (isset($asset->website_url)) { $post['website_url'] = $asset[$source]['url']; }
-  if (isset($asset->country_focus_array)) { $post['okhub_countries'] = $asset->country_focus_array; }
-  if (isset($asset->category_region_array)) { $post['okhub_regions'] = $asset->category_region_array; }
-  if (isset($asset->category_theme_array)) { $post['okhub_themes'] = $asset[$source]['hub_theme']; }
-  if (isset($asset->metadata_url)) { $post['metadata_url'] = $asset[$source]['metadata_url']; }
-  if (isset($asset->keywords)) { $post['post_tag'] = $asset->keywords; }
+  if (isset($asset[$source]['site'])) { $post['site'] = $asset[$source]['site']; }
+  if (isset($asset[$source]['timestamp'])) { $post['timestamp'] = $asset[$source]['date_created']; }
+  if (isset($asset[$source]['url'])) { $post['website_url'] = $asset[$source]['url']; }
+  if (isset($asset[$source]['country_focus_array'])) { $post['okhub_countries'] = $asset[$source]['country_focus_array']; }
+  if (isset($asset[$source]['category_region_array'])) { $post['okhub_regions'] = $asset[$source]['category_region_array']; }
+  if (isset($asset[$source]['hub_themes'])) { $post['okhub_themes'] = $asset[$source]['category_theme_array']; }
+  if (isset($asset[$source]['hub_country'])) { $post['okhub_countries'] = $asset[$source]['country_focus_array']; }
+  if (isset($asset[$source]['hub_region'])) { $post['okhub_regions'] = $asset[$source]['category_region_array']; }
+  if (isset($asset[$source]['metadata_url'])) { $post['metadata_url'] = $asset[$source]['metadata_url']; }
+  if (isset($asset[$source]['hub_themes'])) { $post['post_tags'] = implode(", ",$asset[$source]['hub_themes']); }
+  if (isset($asset[$source]['date_created'])) { $post['date_created'] = $asset[$source]['date_created']; }
+  if (isset($asset[$source]['date_updated'])) { $post['date_updated'] = $asset[$source]['date_updated']; }
   if ($type == 'documents') {
     // Document-specific fields.
-    if (isset($asset->authors)) { $post['authors'] = $asset[$source]['authors']; }
-    if (isset($asset->language_name)) { $post['language_name'] = $asset->language_name; }
-    if (isset($asset->publication_date)) { $post['publication_date'] = $asset[$source]['publication_year']; }
-    if (isset($asset->licence_type)) { $post['licence_type'] = $asset->licence_type; }
-    if (isset($asset->publisher_array)) { $post['publisher_array'] = $asset[$source]['publisher']; }
-    if (isset($asset->publisher_country)) { $post['publisher_country'] = $asset[$source]['publisher_country']; }
-    if (isset($asset->urls)) { $post['urls'] = $asset[$source]['url']; }
+    if (isset($asset[$source]['authors'])) { $post['authors'] = $asset[$source]['authors']; }
+    if (isset($asset[$source]['language_name'])) { $post['language_name'] = $asset[$source]['language_name']; }
+    if (isset($asset[$source]['publication_year'])) { $post['publication_year'] = $asset[$source]['publication_year']; }
+    if (isset($asset[$source]['licence_type'])) { $post['licence_type'] = $asset[$source]['licence_type']; }
+    if (isset($asset[$source]['publisher'])) { $post['publisher'] = $asset[$source]['publisher']; }
+    if (isset($asset[$source]['publisher_country'])) { $post['publisher_country'] = $asset[$source]['publisher_country']; }
+    if (isset($asset[$source]['url'])) { $post['urls'] = $asset[$source]['url']; }
   }
-  elseif ($type == 'organisations') {
-    // Organisation-specific fields.
-    if (isset($asset->acronym)) { $post['acronym'] = $asset->acronym; }
-    if (isset($asset->alternative_acronym)) { $post['alternative_acronym'] = $asset->alternative_acronym; }
-    if (isset($asset->organisation_type)) { $post['organisation_type'] = $asset->organisation_type; }
-    if (isset($asset->organisation_url)) { $post['organisation_url'] = $asset->organisation_url; }
-    if (isset($asset->location_country)) { $post['location_country'] = $asset->location_country; }
-  }
+ 
+  //error_log(json_encode($post),0);
   $post = (object) $post;
   return $post;
 }

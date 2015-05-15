@@ -14,7 +14,7 @@ global $okhub_sources;
 $okhub_datasets = array('hub');
 //$okhub_assets = array('documents','organisations');
 $okhub_assets = array('documents');
-$okhub_categories = array('countries', 'regions','themes');
+$okhub_categories = array('countries','regions','themes');
 $okhub_sources = array('opendocs','eldis','observaction','bridge','heart','pids','ccccc','ella','serpp');
 global $okhubapi_errors;
 $okhubapi_errors = array();
@@ -113,8 +113,8 @@ function okhubapi_variable_get($group, $variable_name, $default = '') {
 //------------------------------ Helper functions --------------------------------
 
 function okhubapi_exclude($dataset, $type) {
-  global $ids_exclude;
-  if (isset($ids_exclude[$dataset]) && ($ids_exclude[$dataset] === $type)) {
+  global $okhub_exclude;
+  if (isset($okhub_exclude[$dataset]) && ($okhub_exclude[$dataset] === $type)) {
     return TRUE;
   }
   else {

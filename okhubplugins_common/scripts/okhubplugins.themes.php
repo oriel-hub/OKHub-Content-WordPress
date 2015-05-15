@@ -1,11 +1,11 @@
 <?php
 
-if (!defined('IDS_API_LIBRARY_PATH')) define('IDS_API_LIBRARY_PATH', dirname(__FILE__) . '/okhubwrapper/');
-if (!defined('IDS_API_ENVIRONMENT')) define('IDS_API_ENVIRONMENT', 'generic');
+if (!defined('OKHUB_API_LIBRARY_PATH')) define('OKHUB_API_LIBRARY_PATH', dirname(__FILE__) . '/okhubwrapper/');
+if (!defined('OKHUB_API_ENVIRONMENT')) define('OKHUB_API_ENVIRONMENT', 'generic');
 
-require_once(IDS_API_LIBRARY_PATH . 'okhubwrapper.wrapper.inc');
+require_once(OKHUB_API_LIBRARY_PATH . 'okhubwrapper.wrapper.inc');
 
-$idsapi = new OkhubApiWrapper;
+$okhubapi = new OkhubApiWrapper;
 
 if (isset($_GET['token_guid'])) {
   $api_key = $_GET['token_guid'];
@@ -17,13 +17,13 @@ if (isset($_GET['token_guid'])) {
 
   if ($id) {
     // We retrieve the children of the indicated theme.
-    $response = $idsapi->search($type, $dataset, $api_key, 'short', 0, 0,0, array('archived' => 'false', 'parent_object_id' => $id));
+    $response = $okhubapi->search($type, $dataset, $api_key, 'short', 0, 0,0, array('archived' => 'false', 'parent_object_id' => $id));
   }
   else {
     // We retrieve all level 1 themes.
-    $response = $idsapi->search($type, $dataset, $api_key, 'short', 0, 0,0, array('archived' => 'false', 'level' => 1));
+    $response = $okhubapi->search($type, $dataset, $api_key, 'short', 0, 0,0, array('archived' => 'false', 'level' => 1));
   }
-  print_r($response->results);
+  //print_r($response->results);
   $results = array();
   if (!$response->isError()) {
     foreach ($response->results as $item) {

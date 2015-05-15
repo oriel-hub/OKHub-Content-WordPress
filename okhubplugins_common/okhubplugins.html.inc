@@ -40,11 +40,13 @@ function okhub_categories($category, $before='', $after='', $separator=', ', $ba
   }
 }
 
-// Retrieves a string (with HTML format) with links to IDS categories.
+// Retrieves a string (with HTML format) with links to OKHUB categories.
 function okhub_get_categories($category, $before='', $after='', $separator=', ', $base_url='') {
   global $post;
   $taxonomy = "okhub_$category";
   $results = (isset($post->{$taxonomy}) ? $before. implode($separator, okhub_links_category($post->{$taxonomy}, $base_url)) . $after : okhub_get_list_categories($post->ID, $category, $before, $separator, $after));
+  //$results = (isset($post->{$taxonomy}) ? $before. implode($separator, $post->{$taxonomy}) . $after : okhub_get_list_categories($post->ID, $category, $before, $separator, $after));
+
   if (!is_wp_error($results)) {
     return $results;
   }
@@ -232,7 +234,7 @@ function okhub_themes($before='', $sep=', ', $after='', $base_url='') {
 
 // okhub_get_themes
 function okhub_get_themes($before='', $sep=', ', $after='', $base_url='') {
-  return okhub_categories('regions', $before='', $sep=', ', $after='', $base_url='');
+  return okhub_categories('themes', $before='', $sep=', ', $after='', $base_url='');
 }
 
 //-------------------- Functions used to generate/format the output --------------------
@@ -249,7 +251,7 @@ function okhub_links_category($categories, $baseurl='') {
     if (isset($category->name) && isset ($category->object_type) && isset($category->object_id)) {
       $object_type = strtolower($category->object_type);
       $category_name = rtrim($category->name, " ($category->object_id)");
-      $url = '<a href="'. $baseurl . $par . $object_type . "=$category->object_id" . '">' . $category_name . '</a>';
+      $url = '<a href="'. $baseurl . $par . $object_type . "=$category->name" . '">' . $category_name . '</a>';
       $links[] = $url;
     }
   }
@@ -295,13 +297,13 @@ function okhub_get_category_array($api_key, $dataset, $category) {
   $okhubapi = new OkhubApiWrapper;
   switch ($category) {
     case 'countries':
-      $array_category = $okhubapi->search('countries', 'hub', $api_key)->getArrayTitles();
+      $array_category = $okhubapi->search('countries', $dataset, $api_key,'short')->getArrayTitles();
       break;
     case 'regions': 
-      $array_category = $okhubapi->search('regions', 'hub', $api_key)->getArrayTitles();
+      $array_category = $okhubapi->search('regions', $dataset, $api_key,'short')->getArrayTitles();
       break;
     case 'themes': 
-      $array_category = $okhubapi->search('themes', 'hub', $api_key)->getArrayTitles('--');
+      $array_category = $okhubapi->search('themes', $dataset, $api_key,'short')->getArrayTitles();
       break;
   }
   return $array_category['results'];
@@ -400,26 +402,44 @@ function okhub_div_field_wrapper($class, $field_name, $label, $contents) {
 // Creates javascript arrays from category arrays retrieved by the API.
 function okhub_js_array($array_category) {
   $js_code = array();
-  foreach ($array_category as $key => $value) {
+  foreach ($array_category as $key => $value) {	  
     $value = addslashes($value['title']);
-    if($value !== "(hidden)"){
+    //if($value !== "(hidden)"){
     	    $js_code[] = "'$value':'$value'";
-    }
+    //}
   }
   $js_array = "{\n" . implode(",\n", $js_code) . '};';
+  return $js_array;
+}
+
+function okhub_js_array2($array_category) {
+  $js_code = array();
+  foreach ($array_category as $key => $value) {	  
+    $value = addslashes($value['title']);
+    //if($value !== "(hidden)"){
+    	    $js_code[] = "'$key':'$value'";
+    //}
+  }
+  $js_array = "{\n" . implode(",\n", $js_code) . '};';  
   return $js_array;
 }
 
 // Load themes to populate tree in the "settings" page.
 function okhub_js_tree($type, $dataset, $api_key) {
   $okhubapi = new OkhubApiWrapper;
-  $response = $okhubapi->search($type, $dataset, $api_key, 'short', 0, 0, 0,array('archived' => 'false', 'level' => 1));
+  //$response = $okhubapi->search($type, $dataset, $api_key, 'short', 0, 0,0, array('archived'=>'false', 'level' => 1));
+  $response = $okhubapi->search($type, $dataset, $api_key, 'short');
+
   $results = array();
   $url = plugins_url('scripts/okhubplugins.themes.php', __FILE__);
   $url .= '?token_guid=' . $api_key . '&site=' . $dataset .'&type=' . $type;
-  if (!$response->isError()) {	  
+  if (!$response->isError()) {
     foreach ($response->results as $item) {
-      $results[] = "{ 'label': '$item->title', 'value': '$item->object_id', 'items': [{ 'value': '$url&id=$item->object_id', 'label': 'Loading...' }] }";
+       $val1 = $item->object_id['hub'];
+       if (!empty($item->title)){
+       	      $title = str_replace("'","\'",$item->title);
+       	      $results[] = "{ 'label': '$title', 'value': '$title', 'items': [{ 'value': '$url&id=$val1', 'label': 'Loading...' }] }";
+       }
     }
   }
   $output = implode(",\n", $results);
@@ -449,11 +469,12 @@ function okhub_init_javascript($plugin, $api_key='', $api_key_validated = FALSE,
   var $jqchosen = jQuery.noConflict();
   </script>
   <script type="text/javascript">
-  okhub_plugin = '<?php echo $plugin; ?>';
-  default_dataset = '<?php echo $default_dataset; ?>';
-  okhub_array_trees_themes = {'hub':{}};
-  okhub_array_categories = {'hub':{'countries':{}, 'regions':{}, 'themes':{}}};
-  okhub_array_categories_mappings = {'hub':{'countries':{}, 'regions':{}, 'themes':{}}};
+  var okhub_plugin = '<?php echo $plugin; ?>';
+  var default_dataset = '<?php echo $default_dataset; ?>';
+  var okhub_array_trees_themes = {'hub':{}};
+  var okhub_array_categories = {'hub':{'countries':{}, 'regions':{}, 'themes':{}}};
+  var okhub_array_categories_mappings = {'hub':{'countries':{}, 'regions':{}, 'themes':{}}};
+
   selected_categories_mappings = {'hub':{}};
   selected_categories = {'hub':{}};
   /* Arrays with previously selected category filters and mappings */
@@ -464,7 +485,9 @@ function okhub_init_javascript($plugin, $api_key='', $api_key_validated = FALSE,
         'regions':<?php echo okhub_php2js($categories['regions'][$dataset]); ?>,
         'themes':<?php echo okhub_php2js($categories['themes'][$dataset]); ?>
       };
-    <?php } ?>
+    <?php } 
+    	
+    ?>
     <?php if (!empty($categories_mappings)) { ?>
       selected_categories_mappings['<?php echo $dataset; ?>'] = {
         'countries':<?php echo okhub_php2js($categories_mappings['countries'][$dataset]); ?>,
@@ -477,22 +500,25 @@ function okhub_init_javascript($plugin, $api_key='', $api_key_validated = FALSE,
   function initCategoriesArrays() {
   <?php
   $okhub_array_categories = array();
+   //$okhub_array_categories_new = array();
   if ($api_key_validated) {
     $types_category = array_keys($categories);
     foreach ($okhub_datasets as $dataset) {
-      $okhub_array_categories[$dataset] = array('countries', 'regions', 'themes');
-      foreach ($types_category as $category) {
+      $okhub_array_categories[$dataset] = array('countries','regions', 'themes');
+     //$okhub_array_categories_new[$dataset] = array('countries','regions', 'themes');
+      foreach ($types_category as $category) {     	      
         $okhub_array_categories[$dataset][$category] = okhub_get_category_array($api_key, $dataset, $category);
         // Populate the sources of the select boxes for categories in filters and mappings.
         echo "\nokhub_array_categories['$dataset']['$category'] = " . okhub_js_array($okhub_array_categories[$dataset][$category]);
+        //echo "\nokhub_array_categories_new['$dataset']['$category'] = " . okhub_js_array2($okhub_array_categories[$dataset][$category]);
+
       }
       // Populate sources of the tree widgets.
       echo "\nokhub_array_trees_themes['$dataset'] = " . okhub_js_tree($category, $dataset, $api_key);
     } 
   }
   ?>
-  }
-  
+  }  
   <?php if ($plugin == 'okhubimport' && $default_user) { ?>
   default_user = '<?php echo $default_user; ?>';
   <?php } ?>

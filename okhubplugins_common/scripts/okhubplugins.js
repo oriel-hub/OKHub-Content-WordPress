@@ -125,7 +125,7 @@ function changeDocumentType() {
 }
 
 function changeMappingsSettings() {
-  if ($jqorig("#ids_map_categories").prop("checked")) {
+  if ($jqorig("#okhub_map_categories").prop("checked")) {
     $jqorig(".ids-categories-mapping").show();
   }
   else {
@@ -135,7 +135,7 @@ function changeMappingsSettings() {
 }
 
 function changeNewCategories() {
-  if ($jqorig("#ids_new_categories").prop("checked")) {
+  if ($jqorig("#okhub_new_categories").prop("checked")) {
     $jqorig(".ids-categories-new").show();
   }
   else {
@@ -180,7 +180,7 @@ function populateSelectBoxes() {
     /* Create and populate themes trees */
     var id_tree = '#jqxTree_' + dataset;
     var id_dropdown = '#dropDownButton_' + dataset;
-
+    //console.log( okhub_array_trees_themes[dataset]);
     $jqtree(id_tree).jqxTree({ source: okhub_array_trees_themes[dataset], height: '200px', width: '350px' });
     $jqtree(id_dropdown).jqxDropDownButton({ width: '350px', height: '25px' });
 
@@ -199,7 +199,7 @@ function populateSelectBoxes() {
       var children = element.find('li');
       $jqtree.each(children, function () {
         var item = $jqtree(id_tree).jqxTree('getItem', this);
-        console.log(item);
+        //console.log(item);
         var prot = item.value.slice(0,7);
         if (prot == 'http://') {
           loaderItem = item;
@@ -228,11 +228,14 @@ function populateSelectBoxes() {
       var object_id = item.value;
       if (object_id !== null) {
         var title = item.label;
-        var exists = $jqorig(id_select_themes + ' option[value=' + object_id + ']').length;
-        if (exists == 0) {
+       // var exists = $jqorig(id_select_themes + ' option[value=' + object_id + ']').length;
+          //var exists = $jqorig(id_select_themes + ' option[value=' + object_id + ']').length;
+        //if (exists == 0) {
           select_themes.append($jqorig("<option></option>").attr("value", object_id).text(title));
-        }
+        //}
         $jqorig('#' + dataset + '_themes_assets' + ' option[value="' + object_id +'"]').prop("selected", true);
+        //$jqorig('#' + dataset + '_themes_assets' + ' option[value="' + title +'"]').prop("selected", true);
+
         $jqchosen(select_themes).trigger("liszt:updated");
       }
     });
@@ -242,10 +245,9 @@ function populateSelectBoxes() {
       id_select_sources = dataset + '_' + category + '_source';
       id_select_mappings = dataset + '_' + category + '_mappings';
 
-      assets_exist = $jqorig('#' + id_select_assets).length !== 0;;
-      sources_exist = $jqorig('#' + id_select_sources).length !== 0;;
-      mappings_exist = $jqorig('#' + id_select_mappings).length !== 0;;
-
+      assets_exist = $jqorig('#' + id_select_assets).length !== 0;
+      sources_exist = $jqorig('#' + id_select_sources).length !== 0;
+      mappings_exist = $jqorig('#' + id_select_mappings).length !== 0;
       /* Populate the filter select boxes - except themes */
       if (assets_exist) {
         select_category_assets = $jqorig('#' + id_select_assets);
@@ -255,10 +257,12 @@ function populateSelectBoxes() {
             select_category_assets.append($jqorig("<option></option>").attr("value", object_id).text(title));
           });
         } else {
-          $jqorig.each(selected_categories[dataset][category], function(i, object_id) {
-            array_object_ids = ids_array_categories[dataset][category];
-            title = array_object_ids[object_id];
-            select_category_assets.append($jqorig("<option></option>").attr("value", object_id).text(title));
+           $jqorig.each(selected_categories[dataset][category], function(i,object_id) {
+	  //$jqorig.each(okhub_array_categories[dataset][category], function(object_id,title) {
+            //array_object_ids = okhub_array_categories_new[dataset][category];
+            //title = array_object_ids[object_id];
+           
+            select_category_assets.append($jqorig("<option></option>").attr("value", object_id).text(object_id));
           });
         }
         /* Mark previously selected categories */
@@ -324,7 +328,7 @@ function collapseTree(tree) {
 
 //TODO: Use selectAllClass() instead.
 function selectAllMappings() {
-  $jqorig.each(['eldis', 'bridge'], function(i, dataset) { 
+  $jqorig.each(['hub'], function(i, dataset) { 
     $jqorig.each(['countries', 'regions', 'themes'], function(j, category) {
       id_select = dataset + '_' + category + '_mappings';
       selectAll(id_select);
@@ -365,11 +369,10 @@ function loadAdminPage() {
 		});
 		$jqorig(".ui-tabs").tabs({ fx: { opacity: "toggle", duration: "fast" } });
 	});
-  if (okhub_plugin == 'okhub_expose') {
+ if (okhub_plugin == 'okhub_expose') {
     changeFields();
     changeFeedType();
-  }
-  else if (okhub_plugin == 'okhubimport' || okhub_plugin == 'okhubview') {
+  }else if (okhub_plugin == 'okhubimport' || okhub_plugin == 'okhubview') {
     initCategoriesArrays();
     populateSelectBoxes();
     if (okhub_plugin == 'okhubview') {

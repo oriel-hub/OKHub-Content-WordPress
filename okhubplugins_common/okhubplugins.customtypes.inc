@@ -5,7 +5,7 @@
 // Creates new post types for OKHUB assets.
 function okhub_post_types_init() {
   //$okhub_post_types = array('documents' => 'Document', 'organisations' => 'Organisations');
-  $okhub_post_types = array('documents' => 'Document','organisations'=>'Organisations');
+  $okhub_post_types = array('documents' => 'Document');
   foreach ($okhub_post_types as $post_type => $singular_name) {
     $post_type_name = 'okhub_' . $post_type;
     $post_type_label = 'OKHUB ' . ucfirst($post_type);

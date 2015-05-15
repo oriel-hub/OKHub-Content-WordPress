@@ -39,26 +39,26 @@
         <?php the_content( __( 'Continue reading <span class="meta-nav">&rarr;</span>', 'twentytwelve' ) ); ?>
       <!-- Example of a simple way in which these fields can be displayed. -->
 			<?php if ( is_single() ) : ?>
-      <div class="ids-fields">
+      <div class="okhub-fields">
         <ul>
-          <?php ids_field('authors', '<li class="ids-field">' . __('Authors: '), '</li>'); ?>
-          <?php ids_field('date_updated', '<li class="ids-field">' . __('Updated on: '), '</li>', array('date', 'Y/m/d')); ?>
+          <?php okhub_field('authors', '<li class="ids-field">' . __('Authors: '), '</li>'); ?>
+          <?php okhub_field('date_updated', '<li class="ids-field">' . __('Updated on: '), '</li>', array('date', 'Y/m/d')); ?>
           <!-- Alternatively: ids_field('date_updated', '<li class="ids-field">' . __('Updated on: '), '</li>', 'date') would use the date format in Wordpress' settings.  -->
-          <?php ids_field('urls', '<li class="ids-field">' . __('External URLs: '), '</li>', 'link'); ?>
+          <?php okhub_field('urls', '<li class="ids-field">' . __('External URLs: '), '</li>', 'link'); ?>
           <!-- Alternatively: ids_field('urls', '<li class="ids-field">' . __('External URLs: '), '</li>', array('link', 'Some text')) can be used to display a text in the link instead of the URL -->
-          <?php ids_categories('countries', '<li class="ids-field">' . __('Countries: '), '</li>'); ?>
-          <?php ids_categories('regions', '<li class="ids-field">' . __('Regions: '), '</li>'); ?>
-          <?php ids_categories('themes', '<li class="ids-field">' . __('Themes: '), '</li>'); ?>
+          <?php okhub_categories('countries', '<li class="ids-field">' . __('Countries: '), '</li>'); ?>
+          <?php okhub_categories('regions', '<li class="ids-field">' . __('Regions: '), '</li>'); ?>
+          <?php okhub_categories('themes', '<li class="ids-field">' . __('Themes: '), '</li>'); ?>
         </ul>
       </div>
-			<?php endif; // is_single() ?>
+	<?php endif; // is_single() ?>
 
-			<?php wp_link_pages( array( 'before' => '<div class="page-links">' . __( 'Pages:', 'twentytwelve' ), 'after' => '</div>' ) ); ?>
+	<?php wp_link_pages( array( 'before' => '<div class="page-links">' . __( 'Pages:', 'twentytwelve' ), 'after' => '</div>' ) ); ?>
 		</div><!-- .entry-content -->
 		<?php endif; ?>
 
 		<footer class="entry-meta">
-			<?php twentytwelve_entry_meta(); ?>
+			<!--<?php //twentytwelve_entry_meta(); ?>-->
       <!-- The edit link does not make sense with content retrieved with the API, so we comment it here. We can include it in single-ids_documents.php for imported documents -->
 			<!--?php edit_post_link( __( 'Edit', 'twentytwelve' ), '<span class="edit-link">', '</span>' ); ?-->
 			<?php if ( is_singular() && get_the_author_meta( 'description' ) && is_multi_author() ) : // If a user has filled out their description and this is a multi-author blog, show a bio on their entries. ?>

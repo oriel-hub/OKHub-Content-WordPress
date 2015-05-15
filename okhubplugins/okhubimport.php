@@ -8,7 +8,7 @@ Author: Modified by Ronald Yacat for the Institute of Development Studies' Open 
 Author URI: http://www.okhub.org/
 License: GPLv3
 
-    Copyright 2012  Institute of Development Studies (OKHUB)
+    Copyright 2014  Institute of Development Studies - Open Knowledge Hub (OKHUB)
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ License: GPLv3
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+//error_reporting(-1);
 if (!defined('OKHUB_API_ENVIRONMENT')) define('OKHUB_API_ENVIRONMENT', 'wordpress');
 
 if (!defined('OKHUB_API_LIBRARY_PATH')) define('OKHUB_API_LIBRARY_PATH', dirname(dirname(__FILE__)) . '/okhubwrapper/');
@@ -109,8 +109,8 @@ function okhubimport_init() {
   }
   add_rewrite_tag('%okhub_site%', '([^&]+)');
   $changed_path_documents = okhubimport_changed_path('okhub_documents');
-  $changed_path_organisations = okhubimport_changed_path('okhub_organisations');
-  if ($changed_path_documents || $changed_path_organisations || okhub_check_permalinks_changed('okhubimport')) {
+  //$changed_path_organisations = okhubimport_changed_path('okhub_organisations');
+  if ($changed_path_documents ||  okhub_check_permalinks_changed('okhubimport')) {
     $wp_rewrite->flush_rules();
   }
 }
@@ -241,7 +241,7 @@ function okhubimport_changed_path($post_type) {
 
 function okhubimport_create_rewrite_rules() {
    okhubimport_rewrite_path('okhub_documents');
-   okhubimport_rewrite_path('okhub_organisations');
+   //okhubimport_rewrite_path('okhub_organisations');
 }
 
 function okhubimport_rewrite_path($post_type){
@@ -324,7 +324,7 @@ function okhubimport_new_taxonomy($taxonomy_name, $taxonomy_label, $singular_nam
       );
     register_taxonomy(
       $taxonomy_name,
-      array ('okhub_documents', 'okhub_organisations'),
+      array ('okhub_documents'),
       $args
     );
     $wp_rewrite->flush_rules();
@@ -340,7 +340,7 @@ function okhubimport_register_new_categories($taxonomy_name) {
 }
 
 function okhubimport_register_taxonomy($taxonomy_name) {
-  $post_types = array('okhub_documents', 'okhub_organisations', 'post');
+  $post_types = array('okhub_documents',  'post');
   foreach ($post_types as $post_type) {
     register_taxonomy_for_object_type($taxonomy_name, $post_type);
   }
@@ -372,15 +372,15 @@ function okhubimport_include_idsassets_loop($query) {
   if ((is_home() && $query->is_main_query()) || is_category() || is_feed() ) {
     $post_types = $query->get('post_type');
     $okhubimport_include_imported_documents = okhubapi_variable_get('okhubimport', 'include_imported_documents', OKHUB_IMPORT_INCLUDE_IMPORTED_DOCUMENTS);
-    $okhubimport_include_imported_organisations = okhubapi_variable_get('okhubimport', 'include_imported_organisations', OKHUB_IMPORT_INCLUDE_IMPORTED_ORGANISATIONS);
+    //$okhubimport_include_imported_organisations = okhubapi_variable_get('okhubimport', 'include_imported_organisations', OKHUB_IMPORT_INCLUDE_IMPORTED_ORGANISATIONS);
     if (empty($post_types) && ($okhubimport_include_imported_documents || $okhubimport_include_imported_organisations)) {
       $all_post_types = array('post');
       if ($okhubimport_include_imported_documents) {
         $all_post_types[] = 'okhub_documents';
       }
-      if ($okhubimport_include_imported_organisations) {
+      /*if ($okhubimport_include_imported_organisations) {
         $all_post_types[] = 'okhub_organisations';
-      }
+      }*/
       $query->set('post_type', $all_post_types);
     }
   }
@@ -469,7 +469,7 @@ function okhubimport_add_menu() {
       add_submenu_page( 'okhubimport_menu', 'All OKHUB Documents', 'All OKHUB Documents', 'manage_options', 'edit.php?post_type=okhub_documents');
     /*}
     if (in_array('hub', $datasets)){*/
-      add_submenu_page( 'okhubimport_menu', 'All OKHUB Organisations', 'All OKHUB Organisations', 'manage_options', 'edit.php?post_type=okhub_organisations');
+      //add_submenu_page( 'okhubimport_menu', 'All OKHUB Organisations', 'All OKHUB Organisations', 'manage_options', 'edit.php?post_type=okhub_organisations');
     }
     foreach ($datasets as $dataset) {
       foreach ($okhub_assets as $asset) {

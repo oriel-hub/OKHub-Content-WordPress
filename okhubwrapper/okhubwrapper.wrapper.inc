@@ -173,7 +173,7 @@ class OkhubApiWrapper {
   * @param array $extra_fields - extra fields to be returned (in short responses). (eg. array('headline', 'category_theme_array')).
   * @return OkhubApiResponse - response object holding the data retrieved by the API call.
   */
-  public function search($object_type, $site, $api_key, $format = 'full', $num_requested = 0, $age_results = 0, $start_offset=0, $params = array(), $extra_fields = array()) {
+  public function search($object_type, $site, $api_key, $format = 'full', $num_requested = 0, $age_results = 0, $start_offset = 0, $params = array(), $extra_fields = array()) {
     $this->request = new OkhubApiRequest();
     $this->request->setTypeRequest('search');
     $this->request->setApiKey($api_key);
@@ -280,23 +280,22 @@ class OkhubApiWrapper {
     $this->request->setUrl();
     $object_type = $this->request->getObjectType();
     // Check if it's in the cache.  If it's not, make the call and save it in the cache.
-    /*if ($data != $this->cacheGet()) {
-      $cached = FALSE;
+    /**/
+    if ($data = $this->cacheGet()) {
+      $cached = TRUE;
       list($results, $total_results) = $data;
     }
-    else {*/
+    else {/**/
       if ($this->request->getTypeRequest() == 'count') {
-        list($results, $total_results, $next_page, $prev_page) = $this->getDecodedCountResults($this->getUrl());
-        //list($results, $total_results) = $this->getDecodedCountResults($this->getUrl());
+        list($results, $total_results) = $this->getDecodedCountResults($this->getUrl());
         $object_type = $this->request->getCountCategory() . '_count';
       }
       else {
-        //list($results, $total_results) = $this->getDecodedResults($this->getUrl(), 0);
-        list($results, $total_results, $next_page, $prev_page) = $this->getDecodedResults($this->getUrl(), 0);
+        list($results, $total_results) = $this->getDecodedResults($this->getUrl(), 0);
       }
-      //$this->cacheSet(array($results, $total_results,$next_page,$prev_page));
-    //}
-    $response = new OkhubApiResponse($results, $object_type, $total_results, $this->request->getSite(), $cached, $next_page, $prev_page);
+      $this->cacheSet(array($results, $total_results));
+    }
+    $response = new OkhubApiResponse($results, $object_type, $total_results, $this->request->getSite(), $cached);
     return $response;
   }
 
@@ -333,8 +332,8 @@ class OkhubApiWrapper {
       $results = $data;
       $total_results = 0;
     }
-    return array($results, $total_results,$next_page,$prev_page);
-    //return array($results, $total_results);
+    //return array($results, $total_results,$next_page,$prev_page);
+    return array($results, $total_results);
   }
 
   /**
@@ -375,9 +374,8 @@ class OkhubApiWrapper {
       $results = $data;
       $total_results = 0;
     }
-    //print_r($results);// remove this ome
-    //echo $next_page;
-    return array($results, $total_results, $next_page,$prev_page);
+    //return array($results, $total_results, $next_page,$prev_page);
+     return array($results, $total_results);
   }
 
   /**
@@ -388,8 +386,8 @@ class OkhubApiWrapper {
   */
   protected function getResponseData($url) {
     // In certain environments (such as Drupal or Wordpress) specific implementations of this function can be provided.
-    if (function_exists('idsapi_get_data')) {
-      $data = idsapi_get_data($url);
+    if (function_exists('okhubapi_get_data')) {
+      $data = okhubapi_get_data($url);
     }
     // If cURL is available, we use it.
     elseif (function_exists('curl_init')) {
@@ -470,7 +468,7 @@ class OkhubApiWrapper {
     static $items = array();
     $cid = $this->cacheId();
     if (!isset($items[$cid])) {
-      $items[$cid] = okhub_cache_get($cid, OKHUB_API_CACHE_REQUESTS);
+      $items[$cid] = okhubapi_cache_get($cid, OKHUB_API_CACHE_REQUESTS);
     }
     return $items[$cid];
   }
@@ -482,10 +480,10 @@ class OkhubApiWrapper {
   protected function cacheSet($data) {
     if (!$data[1]) {
       // If we get an empty response we set a 5 min. temporary cache to avoid making repeated failed requests in a short period of time.
-      okhub_cache_set($this->cacheId(), $data, OKHUB_API_CACHE_REQUESTS, 300);
+      okhubapi_cache_set($this->cacheId(), $data, OKHUB_API_CACHE_REQUESTS, 300);
     }
     else {
-      okhub_cache_set($this->cacheId(), $data, OKHUB_API_CACHE_REQUESTS, OKHUB_API_DEFAULT_CACHE_TIME);
+      okhubapi_cache_set($this->cacheId(), $data, OKHUB_API_CACHE_REQUESTS, OKHUB_API_DEFAULT_CACHE_TIME);
     }
   }
 
@@ -501,7 +499,7 @@ class OkhubApiWrapper {
   * Delete the cache entry for the current request.
   */
   public function cacheClear() {
-    okhub_cache_clear($this->cacheId());
+    okhubapi_cache_clear($this->cacheId());
   }
 
   /**

@@ -68,9 +68,9 @@ function okhubview_render_form() {
       <?php printf(__('This plugin provides access to the OKHub datasets via the Open Knowledge Hub API (<a href="%s" target="_new">%s</a>).'), OKHUB_API_HOME_URL, OKHUB_API_HOME_URL); ?>
       <br />
       <br /><!--
-      <?php _e(); ?>
+      <?php //_e(); ?>
       <br />
-      <?php _e(); ?>-->
+      <?php //_e(); ?>-->
       <br />
       <br />
       <i>
@@ -120,7 +120,7 @@ function okhubview_render_form() {
         <!--<tr>
           <th scope="row"><?php _e('Default language'); ?></th>
           <td>
-            <?php echo okhub_select_box('okhubview_options[language]', 'okhubview_language', okhub_languages(), array(okhubapi_variable_get('okhubview', 'language', IDS_VIEW_DEFAULT_LANGUAGE))); ?>
+            <?php echo okhub_select_box('okhubview_options[language]', 'okhubview_language', okhub_languages(), array(okhubapi_variable_get('okhubview', 'language', OKHUB_VIEW_DEFAULT_LANGUAGE))); ?>
             <p class="description">
             <?php _e('Translatable metadata (title, description) will be displayed in this language, if available.'); ?>
             </p>
@@ -146,12 +146,12 @@ function okhubview_render_form() {
       <table class="form-table ui-tabs-panel" id="filters">
         <tr>
           <td colspan="2">
-            <p class="description"><?php _e('Documents and/or organisations to be displayed can be limited to those matching the following filters.'); ?></p>
+            <p class="description"><?php _e('Documents to be displayed can be limited to those matching the following filters.'); ?></p>
           </td>
         </tr>
 
-        <!-- IDS Categories (countries, regions, themes) -->
-        <?php foreach ($okhub_datasets as $dataset) { ?>
+        <!-- OKHub Categories (countries, regions, themes) -->
+        <?php foreach ($okhub_datasets as $dataset) { ?>        	
         <tr class="ids_categories_<?php echo $dataset; ?>">
           <td colspan="2">
             <p id="title_categories" class="ids-settings-separator ids-categories-<?php echo $dataset; ?>"><?php echo ucfirst($dataset); ?> categories</p>
@@ -185,7 +185,7 @@ function okhubview_render_form() {
           $option_name = $dataset . '_themes_assets';
           ?>
           <div class="ids-categories-themes">
-            <select data-placeholder="No themes selected" class="chzn-select" style="width:350px;" id='<?php echo $field_id; ?>' name='okhubview_options[<?php echo $option_name; ?>][]' multiple='multiple' size='10'></select><br>
+            <select data-placeholder="No themes selected" class="chzn-select" style="width:350px;" id='<?php echo $field_id; ?>'  name='okhubview_options[<?php echo $option_name; ?>][]' multiple='multiple' size='10'></select><br>
           </div>
 
           <div id='<?php echo $themes_dropdown_id; ?>' style="float:left; margin-right:40px;">
@@ -204,7 +204,8 @@ function okhubview_render_form() {
           </td>
         </tr>
 
-        <?php } // foreach dataset ?>
+        <?php } // foreach dataset 
+        ?>
 
         <tr>
           <td colspan="2">
@@ -216,7 +217,7 @@ function okhubview_render_form() {
         <!--<tr>
          <th scope="row"><?php _e('Age of documents and/or organisations'); ?></th>
           <td>
-            <?php echo okhub_select_box('okhubview_options[age_new_assets]', 'okhubview_age_new_assets', array('0' => __('Do not filter by age'), '7' => __('One week'), '30' => __('One month'), '180' => __('Six months'), '365' => __('One year')), array(okhubapi_variable_get('okhubview', 'age_new_assets', IDS_API_AGE_NEW_ASSETS))); ?>
+            <?php echo okhub_select_box('okhubview_options[age_new_assets]', 'okhubview_age_new_assets', array('0' => __('Do not filter by age'), '7' => __('One week'), '30' => __('One month'), '180' => __('Six months'), '365' => __('One year')), array(okhubapi_variable_get('okhubview', 'age_new_assets', OKHUB_API_AGE_NEW_ASSETS))); ?>
             <p class="description"><?php _e('Only documents/organisations published after the indicated time will be shown.'); ?></p>
           </td>
         </tr>-->
@@ -246,7 +247,7 @@ function okhubview_render_form() {
         </tr>-->
 
         <!-- Authors -->
-        <tr>
+        <!--<tr>
           <th scope="row"><?php _e('Documents\' author(s)'); ?></th>
           <td>
             <input type="text" size="57" name="okhubview_options[view_authors_assets]" value="<?php echo okhubapi_variable_get('okhubview', 'view_authors_assets', ''); ?>" /><br />
@@ -254,10 +255,10 @@ function okhubview_render_form() {
             <?php _e('A list of comma-separated authors\' names.'); ?><br />
             <?php _e('Example: <i>Chomsky, Foucault</i> will retrieve documents with either <i>Chomsky</i> or <i>Foucault</i> in the "author" field.'); ?></p>
           </td>
-        </tr>
+        </tr>-->
 
         <!-- Publishers -->
-        <tr>
+        <!--<tr>
           <th scope="row"><?php _e('Documents\' publisher(s)'); ?></th>
           <td>
             <input type="text" size="57" name="okhubview_options[view_publishers_assets]" value="<?php echo okhubapi_variable_get('okhubview', 'view_publishers_assets', ''); ?>" /><br />
@@ -266,7 +267,7 @@ function okhubview_render_form() {
             <?php _e('Example: <i>World Bank, UNDP</i> will retrieve documents with either <i>World Bank</i> or <i>UNDP</i> in the "publisher" field.'); ?></p>
           </td>
         </tr>
-
+        -->
         <!-- Additional query terms -->
         <tr>
           <th scope="row"><?php _e('Query terms'); ?></th>

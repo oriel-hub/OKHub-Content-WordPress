@@ -16,7 +16,7 @@ $okhubapi_cache = new OkhubApiCache(array('repository' => dirname(__FILE__) . '/
 */
 function okhubapi_cache_set($cache_id, $data, $bin, $expire) {
   global $okhubapi_cache;
-  $okhub_cache->store($cache_id, $data, $expire, $bin);
+  $okhubapi_cache->store($cache_id, $data, $expire, $bin);
 }
 
 /**

@@ -40,10 +40,10 @@ class OkhubApiResponse {
   * @param bool $cached - indicates if the response was retrieved from the cache.
   */
   //function __construct($results, $format, $type_results, $total_results, $default_site, $cached = FALSE) {
-  function __construct($results, $type_results, $total_results, $default_site, $cached = FALSE, $next_page, $prev_page) {
+  function __construct($results, $type_results, $total_results, $default_site, $cached = FALSE) {
     $this->results = array();
-    $this->next_page=$next_page;
-    $this->prev_page=$prev_page;
+    //$this->next_page=$next_page;
+    //$this->prev_page=$prev_page;
     if (!is_array($results)) {
       $this->is_error = TRUE;
       if (is_string($results)) {
@@ -127,19 +127,18 @@ class OkhubApiResponse {
     $array_objects = array();
     foreach ($this->results as $object) {
       if ((!isset($object->archived)) || ($object->archived !== 'true')) {
-        $title = $object->title;
+      	      $title="";
+	      if (isset($object->title)){
+		      $title = $object->title;
+	      }
         if ($padding_str) {
           if (isset($object->level)) {
-            $level = $object->level;
-            $padding = strlen($title) + strlen($padding_str)*($level - 1);
-            $title = str_pad($object->title, $padding, $padding_str, STR_PAD_LEFT);
+		    $level = $object->level;
+		    $padding = strlen($title) + strlen($padding_str)*($level - 1);
+		    $title = str_pad($object->title, $padding, $padding_str, STR_PAD_LEFT);
           } 
         }
-        /*$array_objects['results'][$object->object_id['hub']]['title'] = $title;
-        $array_objects['results'][$object->object_id['hub']]['publication_year'] = $object->publication_year;
-        $array_objects['results'][$object->object_id['hub']]['publisher'] = $object->publisher;
-	$array_objects['results'][$object->object_id['hub']]['metadata_url'] = $object->metadata_url;*/
-	if ($title !=""){
+	if ($title != ""){
 		$array_objects['results'][$object->object_id['hub']]['title'] = $title;
 	}
       }
@@ -153,6 +152,7 @@ class OkhubApiResponse {
     }
     $array_objects['metadata']['total_results'] = $this->total_results;
     */
+    //print_r($array_objects);
     return $array_objects;
   }
 
@@ -200,12 +200,12 @@ class OkhubApiResponse {
 			}
 		}
   	}
-  	if ($this->next_page !== 0){
+  	/*if ($this->next_page !== 0){
   		$blog_entries['metadata']['next_page']=$this->next_page;
   	}
   	if ($this->prev_page !== 0){
   		$blog_entries['metadata']['prev_page']=$this->prev_page;
-  	}
+  	}*/
   	$blog_entries['metadata']['total_results'] = $this->total_results;
   	return $blog_entries;  
   }
@@ -214,8 +214,14 @@ class OkhubApiResponse {
   	foreach($this->results as $i=>$object){
   		if (is_array($source)){
   			foreach($source as $s){
-  				if (!empty($object->titles[$s])){
+  				if (isset($object->object_id[$s])){
+  				//if (!empty($object->titles[$s])){
+  					$blog_entries['results'][$object->object_id['hub']]['object_id'] = $object->object_id['hub'];
+					$blog_entries['results'][$object->object_id['hub']]['hub_timestamp'] = $object->hub_timestamp;
+					$blog_entries['results'][$object->object_id['hub']]['hub_sources'] = $object->hub_sources;
 					$blog_entries['results'][$object->object_id['hub']][$s]['title'] = $object->titles[$s];
+
+					$blog_entries['results'][$object->object_id['hub']][$s]['document_medium'] = $object->document_medium[$s];
 					$blog_entries['results'][$object->object_id['hub']][$s]['description'] = $object->description[$s];
 					$blog_entries['results'][$object->object_id['hub']][$s]['url'] = $object->urls[$s];
 					$blog_entries['results'][$object->object_id['hub']][$s]['authors'] = $object->authors[$s];
@@ -223,25 +229,26 @@ class OkhubApiResponse {
 					$blog_entries['results'][$object->object_id['hub']][$s]['publisher'] = $object->publisher[$s][0];
 					$blog_entries['results'][$object->object_id['hub']][$s]['publication_year'] = $object->publication_year[$s][0];
 					$blog_entries['results'][$object->object_id['hub']][$s]['metadata_url'] = $object->metadata_url;
-					//$blog_entries['results'][$object->object_id['hub']][$s]['hub_themes_inline'] = implode(",",$object->hub_themes[$s]);
+					//$blog_entries['results'][$object->object_id['hub']][$s]['hub_themes_inline'] = implode(", ",$object->hub_themes[$s]);
 					$blog_entries['results'][$object->object_id['hub']][$s]['hub_themes'] = $object->hub_themes[$s];
 					//$blog_entries['results'][$object->object_id['hub']][$s]['hub_country'] = $object->hub_country;
 					$blog_entries['results'][$object->object_id['hub']][$s]['date_created'] = $object->date_created;
 					$blog_entries['results'][$object->object_id['hub']][$s]['date_updated'] = $object->date_updated;
-					$blog_entries['results'][$object->object_id['hub']][$s]['country_focus'] = $object->country_focus[$s];
+					//$blog_entries['results'][$object->object_id['hub']][$s]['country_focus'] = implode(",",$object->country_focus[$s]);
 					$blog_entries['results'][$object->object_id['hub']][$s]['hub_country'] = $object->hub_country[$s]['en'];
+					$blog_entries['results'][$object->object_id['hub']][$s]['country_focus'] = $object->country_focus[$s];
 					$blog_entries['results'][$object->object_id['hub']][$s]['hub_region'] = $object->hub_region[$s]['en'];
-					
-				}	
+					$blog_entries['results'][$object->object_id['hub']][$s]['category_theme_array'] = $object->category_theme_array[$s];
+					$blog_entries['results'][$object->object_id['hub']][$s]['category_subject_array'] = $object->category_subject_array[$s];
+					$blog_entries['results'][$object->object_id['hub']][$s]['category_region_array'] = $object->category_region_array[$s];
+					$blog_entries['results'][$object->object_id['hub']][$s]['country_focus_array'] = $object->country_focus_array[$s];					
+				}else{
+					//echo $s;	
+				}
   			}			
   		}
   	}
-  	if ($this->next_page !== 0){
-  		$blog_entries['metadata']['next_page']=$this->next_page;
-  	}
-  	if ($this->prev_page !== 0){
-  		$blog_entries['metadata']['prev_page']=$this->prev_page;
-  	}
+
   	$blog_entries['metadata']['total_results'] = $this->total_results;
   	return $blog_entries;  
   }

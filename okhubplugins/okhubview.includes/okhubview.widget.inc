@@ -66,7 +66,7 @@ class OKHUB_View_Widget extends WP_Widget {
 		<input id="<?php echo $this->get_field_id('okhubview_widget_num_items'); ?>" name="<?php echo $this->get_field_name('okhubview_widget_num_items'); ?>" type="text" value="<?php echo $num_items; ?>" size="10"/>
     <br /><br />
     <label for="<?php echo $this->get_field_id('okhubview_widget_show_type'); ?>"><?php _e('Type of content'); ?></label><br>
-    <?php echo okhub_select_box($this->get_field_name('okhubview_widget_show_type'), $this->get_field_id('okhubview_widget_show_type'), array('documents' => __('Documents'), 'organisations' => __('Organisations')), array($show_type)); ?>
+    <?php echo okhub_select_box($this->get_field_name('okhubview_widget_show_type'), $this->get_field_id('okhubview_widget_show_type'), array('documents' => __('Documents')), array($show_type)); ?>
     <br /><br />
     <label for="<?php echo $this->get_field_id('okhubview_widget_apply_filters'); ?>"><input id="<?php echo $this->get_field_id('okhubview_widget_apply_filters'); ?>" name="<?php echo $this->get_field_name('okhubview_widget_apply_filters'); ?>" type="checkbox" value="1" <?php  checked($apply_filters, TRUE); ?> /> <?php _e('Apply OKHUB View Plugin\'s filters'); ?></label>
     <br /><br />
@@ -152,28 +152,12 @@ class OKHUB_View_Widget extends WP_Widget {
             $list_publishers = implode('|', array_map('trim', $publishers));
             $filter_params['publisher_name'] = $list_publishers;
           }
-          /*if ($language_name_codes) {
-            $ids_languages = okhub_languages();
-            $list_language_names = array();
-            foreach ($language_name_codes as $language_code) {
-              if (isset($ids_languages[$language_code])) {
-                $list_language_names[] = $ids_languages[$language_code]; 
-              }
-              if ($list_language_names) {
-                $language_names = implode('|', $list_language_names);
-                $filter_params['language_name'] = $language_names;
-              }
-            }
-          }*/
         }
         $num_retrieved = 0;
         $total_results = 0;
         $offset = 0;
         $more_results = TRUE;
         while (($num_retrieved < $num_items) && $more_results) {
-          /*if ($offset) {
-            $filter_params['start_offset'] = $offset;
-          }*/
           $response = $okhubapi->search('documents', 'hub', $api_key, 'full', 10, 0, $offset, $filter_params);
          // $response = $okhubapi->search($type, $dataset, $api_key, 'short', $num_items, $age_results, $filter_params, array('urls', 'language_array', 'website_url'));
           if ($response->isError()) {
@@ -204,7 +188,7 @@ class OKHUB_View_Widget extends WP_Widget {
         }
       }
       else {
-      	$response = $okhubapi->search($type,$dataset, $api_key, 'full', $num_items, 0,$offset,$filter_params);
+      	$response = $okhubapi->search($type,$dataset, $api_key, 'short', $num_items, 0,$filter_params);
         //$response = $okhubapi->search($type, $dataset, $api_key, 'short', $num_items, $age_results, $filter_params, array('website_url'));
         if ($response->isError()) {
           $error_message = __('No content retrieved by the API call. ') . $response->getErrorMessage();

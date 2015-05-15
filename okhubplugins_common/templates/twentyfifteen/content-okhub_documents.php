@@ -3,17 +3,17 @@
  * The default template for displaying content. Used for both single and index/archive/search.
  *
  * @package WordPress
- * @subpackage Twenty_Twelve
- * @since Twenty Twelve 1.0
+ * @subpackage Twenty_Fifteen
+ * @since Twenty Fifteen 1.0
  */
 ?>
-
 	<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 		<?php if ( is_sticky() && is_home() && ! is_paged() ) : ?>
 		<div class="featured-post">
 			<?php _e( 'Featured post', 'twentytwelve' ); ?>
 		</div>
 		<?php endif; ?>
+
 		<header class="entry-header">
 			<?php the_post_thumbnail(); ?>
 			<?php if ( is_single() ) : ?>
@@ -28,39 +28,36 @@
 					<?php comments_popup_link( '<span class="leave-reply">' . __( 'Leave a reply', 'twentytwelve' ) . '</span>', __( '1 Reply', 'twentytwelve' ), __( '% Replies', 'twentytwelve' ) ); ?>
 				</div><!-- .comments-link -->
 			<?php endif; // comments_open() ?>
-		</header><!-- .entry-header -->
+		</header><!-- entry-header -->
 
-		<?php if ( is_search() ) : // Only display Excerpts for Search ?>
+		<?php if ( ! is_single() ) : ?>
 		<div class="entry-summary">
 			<?php the_excerpt(); ?>
 		</div><!-- .entry-summary -->
 		<?php else : ?>
 		<div class="entry-content">
-			<?php the_content( __( 'Continue reading <span class="meta-nav">&rarr;</span>', 'twentytwelve' ) ); ?>
-
-			<?php if ( is_single() ) : ?>
-      <!-- Example of a simple way in which these fields can be displayed. They can be used in other parts of the templates. -->
-      <div class="ids-fields entry-meta">
+        <?php the_content( __( 'Continue reading <span class="meta-nav">&rarr;</span>', 'twentyfifteen' ) ); ?>
+      <!-- Example of a simple way in which these fields can be displayed. -->
+      <?php if ( is_single() ) : ?>
+      <div class="okhub-fields">
         <ul>
-          <?php ids_field('acronym', '<li class="ids-field">' . __('Acronym: '), '</li>'); ?>
-          <?php ids_field('organisation_url', '<li class="ids-field">' . __('Organisation URL: '), '</li>', 'link'); ?>
-          <?php ids_field('organisation_type', '<li class="ids-field">' . __('Organisation type: '), '</li>'); ?>
-          <?php ids_field('location_country', '<li class="ids-field">' . __('Location country: '), '</li>'); ?>
-          <?php ids_field('date_updated', '<li class="ids-field">' . __('Updated on: '), '</li>', 'date'); ?>
-          <?php ids_categories('countries', '<li class="ids-field">' . __('Countries: '), '</li>'); ?>
-          <?php ids_categories('regions', '<li class="ids-field">' . __('Regions: '), '</li>'); ?>
-          <?php ids_categories('themes', '<li class="ids-field">' . __('Themes: '), '</li>'); ?>
+          <?php okhub_field('authors', '<li class="ids-field">' . __('Authors: '), '</li>'); ?>
+          <?php okhub_field('date_updated', '<li class="ids-field">' . __('Updated on: '), '</li>', array('date', 'Y/m/d')); ?>
+          <?php okhub_field('urls', '<li class="ids-field">' . __('External URLs: '), '</li>', 'link'); ?>
+          <?php okhub_categories('countries', '<li class="ids-field">' . __('Countries: '), '</li>'); ?>
+          <?php okhub_categories('regions', '<li class="ids-field">' . __('Regions: '), '</li>'); ?>
+          <?php okhub_categories('themes', '<li class="ids-field">' . __('Themes: '), '</li>'); ?>
         </ul>
       </div>
-			<?php endif; // is_single() ?>
+	<?php endif; // is_single() ?>
 
-			<?php wp_link_pages( array( 'before' => '<div class="page-links">' . __( 'Pages:', 'twentytwelve' ), 'after' => '</div>' ) ); ?>
+	<?php wp_link_pages( array( 'before' => '<div class="page-links">' . __( 'Pages:', 'twentyfifteen' ), 'after' => '</div>' ) ); ?>
 		</div><!-- .entry-content -->
 		<?php endif; ?>
 
 		<footer class="entry-meta">
-			<?php twentytwelve_entry_meta(); ?>
-      <!-- The edit link does not make sense with content retrieved with the API, so we comment it here. We can include it in single-ids_organisations.php for imported organisations -->
+			<?php twentyfifteen_entry_meta(); ?>
+      <!-- The edit link does not make sense with content retrieved with the API, so we comment it here. We can include it in single-ids_documents.php for imported documents -->
 			<!--?php edit_post_link( __( 'Edit', 'twentytwelve' ), '<span class="edit-link">', '</span>' ); ?-->
 			<?php if ( is_singular() && get_the_author_meta( 'description' ) && is_multi_author() ) : // If a user has filled out their description and this is a multi-author blog, show a bio on their entries. ?>
 				<div class="author-info">

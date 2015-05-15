@@ -32,7 +32,7 @@ function okhubimport_general_page() {
     <ul class="ids-category-list">
     <?php if (in_array('hub', $datasets)) { ?>
     <li class="cat-item"> <p><a href="<?php echo get_post_type_archive_link('okhub_documents'); ?>"><?php _e('View all imported documents'); ?></a></p>
-    <li class="cat-item"> <p><a href="<?php echo get_post_type_archive_link('okhub_organisations'); ?>"><?php _e('View all imported organisations'); ?></a></p>
+    <!--<li class="cat-item"> <p><a href="<?php echo get_post_type_archive_link('okhub_organisations'); ?>"><?php _e('View all imported organisations'); ?></a></p>-->
     <?php } ?>
 
     <?php
@@ -46,7 +46,7 @@ function okhubimport_general_page() {
             $link .= $par . 'okhub_site=' . $dataset;
           }
           ?>
-          <li class="cat-item"> <p><a href="<?php echo site_url($link); ?>"><?php _e('View'); ?> <?php echo $name; ?></a></p>
+          <!--<li class="cat-item"> <p><a href="<?php echo site_url($link); ?>"><?php _e('View'); ?> <?php echo $name; ?></a></p>-->
       <?php }
       }
     } ?>
@@ -204,7 +204,7 @@ function okhubimport_importer_form() {
           <label><input name="okhubimport_import_documents" type="checkbox" /> <?php _e('Documents'); ?></label> &nbsp;&nbsp;&nbsp;
           <?php //TODO. Generalize
           if ($default_dataset !== 'bridge')  { ?>
-            <label><input name="okhubimport_import_organisations" type="checkbox" /> <?php _e('Organisations'); ?></label>
+            <!--<label><input name="okhubimport_import_organisations" type="checkbox" /> <?php _e('Organisations'); ?></label>-->
           <?php } ?>
           <br/>
 
@@ -361,7 +361,7 @@ function okhubimport_render_form() {
           if (get_option('permalink_structure')) {
             $path_disabled = '';
             $default_path_documents = 'okhub_assets/documents';
-            $default_path_organisations = 'okhub_assets/organisations';
+            //$default_path_organisations = 'okhub_assets/organisations';
           }
           else {
             $path_disabled = ' disabled';
@@ -377,7 +377,7 @@ function okhubimport_render_form() {
             <input type="hidden" size="30" name="okhubimport_options[okhub_documents_old_path]" value="<?php echo okhubapi_variable_get('okhubimport', 'okhub_documents_old_path', ''); ?>" />
           </td>
         </tr>
-        <tr>
+        <!--<tr>
           <th scope="row"><?php _e('OKHUB Organisations path'); ?></th>
           <td>
             <code><?php echo home_url(); ?>/</code>
@@ -387,7 +387,7 @@ function okhubimport_render_form() {
               <?php _e('These paths, relative to the site URL, can be used to retrieve and display imported elements.'); ?>
             </p>
           </td>
-        </tr>
+        </tr>-->
         <tr>
           <th scope="row"></th>
           <td>
@@ -421,7 +421,7 @@ function okhubimport_render_form() {
 
         <!-- Number of assets to import -->
         <tr>
-          <th scope="row"><?php _e('Number of documents/organisations'); ?></th>
+          <th scope="row"><?php _e('Number of documents'); ?></th>
           <td>
             <input type="text" size="10" name="okhubimport_options[num_items]" value="<?php echo okhubapi_variable_get('okhubimport', 'num_items', OKHUB_API_NUM_ITEMS); ?>" />
             <p class="description">
@@ -432,7 +432,7 @@ function okhubimport_render_form() {
           </td>
         </tr>
 
-        <!-- Languages -->
+        <!-- Languages 
         <tr>
           <th scope="row"><?php _e('Default language'); ?></th>
           <td>
@@ -441,9 +441,9 @@ function okhubimport_render_form() {
             <?php _e('Translatable metadata (title, description) will be set in this language, if available.'); ?>
             </p>
           </td>
-        </tr>
+        </tr>-->
 
-        <!-- Additional languages -->
+        <!-- Additional languages 
         <tr>
           <th scope="row"><?php _e('Additional languages'); ?></th>
           <td>
@@ -453,7 +453,7 @@ function okhubimport_render_form() {
             <?php _e('If available, metadata in the selected languages (title, description) will be imported, in addition to the one in the default language.'); ?>
             </p>
           </td>
-        </tr>
+        </tr>-->
 
         <!-- Updated assets -->
         <tr>
@@ -479,7 +479,7 @@ function okhubimport_render_form() {
         }
         foreach ($okhub_datasets as $dataset) { 
           $dataset_name = ucfirst($dataset); ?>
-          <tr valign="top" class="ids-categories-<?php echo $dataset; ?>">
+          <!--<tr valign="top" class="ids-categories-<?php echo $dataset; ?>">
             <th scope="row"><?php echo $dataset_name . __(' document types'); ?></th>
             <td id="radio_document_type_<?php echo $dataset; ?>">
               <label><input name="okhubimport_options[import_document_type_<?php echo $dataset; ?>]" type="radio" value="field" <?php checked('field', okhubapi_variable_get('okhubimport', 'import_document_type_' . $dataset, 'field')); ?> onchange="changeDocumentType();" /> Import as a field</label> <br />
@@ -490,8 +490,8 @@ function okhubimport_render_form() {
                 <?php _e('If document types are imported as taxonomy terms, mappings can be created for them in the "Category settings" section.'); ?>
               </p>
             </td>
-          </tr>
-          <!-- Document types: existing taxonomy -->       
+          </tr>-->
+          <!-- Document types: existing taxonomy      
           <tr class="ids-categories-<?php echo $dataset; ?> document-type-taxonomy-<?php echo $dataset; ?> document-type-existing-taxonomy-<?php echo $dataset; ?>">
             <th scope="row"></th>
             <td>
@@ -500,8 +500,8 @@ function okhubimport_render_form() {
                 <?php _e('Taxonomy to add "document type" terms to.'); ?>
               </p>
             </td>
-          </tr>
-          <!-- Document types: new taxonomy -->
+          </tr> --> 
+          <!-- Document types: new taxonomy
           <tr class="ids-categories-<?php echo $dataset; ?> document-type-taxonomy-<?php echo $dataset; ?> document-type-new-taxonomy-<?php echo $dataset; ?>">
             <th scope="row"></th>
             <td>
@@ -515,7 +515,7 @@ function okhubimport_render_form() {
                 <?php _e('New taxonomy label (plural).'); ?>
               </p>
             </td>
-          </tr>
+          </tr> -->
         <?php } // foreach ?>
 
         <!-- Number of assets to retrieve -->
@@ -576,11 +576,11 @@ function okhubimport_render_form() {
 
         <!-- Import tags (OKHUB keywords) -->
         <tr valign="top">
-          <th scope="row"><?php _e('Import OKHUB keywords'); ?></th>
+          <th scope="row"><?php _e('Import OKHUB keywords/themes'); ?></th>
           <td>
             <?php $import_tags = okhubapi_variable_get('okhubimport', 'import_tags', OKHUB_IMPORT_TAGS); ?>
-            <label><input name="okhubimport_options[import_tags]" type="checkbox" <?php  echo ($import_tags ? 'checked="yes"' : ''); ?> /> <?php _e('Include keywords as tags'); ?></label>
-            <p class="description"><?php _e('Please indicate if you would like to include OKHUB keywords as tags of the imported documents and/or organisations.'); ?></p>
+            <label><input name="okhubimport_options[import_tags]" type="checkbox" <?php  echo ($import_tags ? 'checked="yes"' : ''); ?> /> <?php _e('Include keywords/themes as tags'); ?></label>
+            <p class="description"><?php _e('Please indicate if you would like to include OKHUB keywords/themes as tags of the imported documents and/or organisations.'); ?></p>
           </td>
         </tr>
       </table>
@@ -650,23 +650,24 @@ function okhubimport_render_form() {
           </td>
         </tr>
         <tr>
-        <?php } // foreach dataset ?>
+        <?php } // foreach dataset 
+        ?>
 
-          <td colspan="2">
+          <!--<td colspan="2">
             <p class="ids-settings-separator">Additional filters</p>
-          </td>
+          </td>-->
         </tr>
 
-        <!-- Age of assets to import -->
+        <!-- Age of assets to import 
         <tr>
          <th scope="row"><?php _e('Age of documents and/or organisations'); ?></th>
           <td>
             <?php echo okhub_select_box('okhubimport_options[age_new_assets]', 'okhubimport_age_new_assets', array('0' => __('Do not filter by age'), '7' => __('One week'), '30' => __('One month'), '180' => __('Six months'), '365' => __('One year')), array(okhubapi_variable_get('okhubimport', 'age_new_assets', OKHUB_API_AGE_NEW_ASSETS))); ?>
             <p class="description"><?php _e('Only documents/organisations published after the indicated time will be imported.'); ?></p>
           </td>
-        </tr>
+        </tr>-->
 
-        <!-- Resources' languages -->
+        <!-- Resources' languages 
         <tr>
           <th scope="row"><?php _e('Resources\' languages'); ?></th>
           <td>
@@ -676,9 +677,9 @@ function okhubimport_render_form() {
             <?php _e('Only import resources that are available in the selected languages. If none is selected, resources in all languages will be imported.'); ?>
             </p>
           </td>
-        </tr>
+        </tr>-->
 
-        <!-- Exclude URIs -->
+        <!-- Exclude URIs 
         <tr>
           <th scope="row"><?php _e('Exclude URIs'); ?></th>
           <td>
@@ -688,9 +689,9 @@ function okhubimport_render_form() {
             <?php _e('This filter can be used, for instance, to avoid importing resources that are originated from this site.'); ?><br />
             <?php _e('Example: <i>http://www.worldbank.org/en/news, undp.org</i> would exclude WB\'s press releases and all resources from servers with undp.org as domain name.'); ?></p>
           </td>
-        </tr>
+        </tr>-->
 
-        <!-- Authors -->
+        <!-- Authors
         <tr>
           <th scope="row"><?php _e('Documents\' author(s)'); ?></th>
           <td>
@@ -699,9 +700,9 @@ function okhubimport_render_form() {
             <?php _e('A list of comma-separated authors\' names.'); ?><br />
             <?php _e('Example: <i>Chomsky, Foucault</i> will retrieve documents with either <i>Chomsky</i> or <i>Foucault</i> in the "author" field.'); ?></p>
           </td>
-        </tr>
+        </tr> -->
 
-        <!-- Publishers -->
+        <!-- Publishers 
         <tr>
           <th scope="row"><?php _e('Documents\' publisher(s)'); ?></th>
           <td>
@@ -710,9 +711,9 @@ function okhubimport_render_form() {
             <?php _e('A list of comma-separated publishers\' names.'); ?><br />
             <?php _e('Example: <i>World Bank, UNDP</i> will retrieve documents with either <i>World Bank</i> or <i>UNDP</i> in the "publisher" field.'); ?></p>
           </td>
-        </tr>
+        </tr>-->
 
-        <!-- Additional query terms -->
+        <!-- Additional query terms
         <tr>
           <th scope="row"><?php _e('Query terms'); ?></th>
           <td>
@@ -723,7 +724,7 @@ function okhubimport_render_form() {
             <?php printf(__('Please check the <a href="%s" target="_new">online documentation</a> for a list of available query fields.'), OKHUB_API_SEARCH_FIELDS_URL); ?>
            </p>
           </td>
-        </tr>
+        </tr> -->
       </table>
 
       <!---------------------------- DISPLAY SETTINGS ------------------------------>
@@ -732,7 +733,7 @@ function okhubimport_render_form() {
       <table class="form-table ui-tabs-panel" id="display">
 
         <!-- Include imported content in the loop -->
-        <tr valign="top">
+        <!--<tr valign="top">
           <th scope="row"><?php _e('Display imported content with regular posts'); ?></th>
           <td>
             <?php $include_imported_documents = okhubapi_variable_get('okhubimport', 'include_imported_documents', OKHUB_IMPORT_INCLUDE_IMPORTED_DOCUMENTS); ?>
@@ -747,7 +748,7 @@ function okhubimport_render_form() {
             <a href="<?php echo get_admin_url(); ?>/admin.php?page=okhubimport_menu"><?php echo get_admin_url(); ?>/admin.php?page=okhubimport_menu</a>
             </p>
           </td>
-        </tr>
+        </tr>-->
 
         <!-- Dataset in public areas -->
         <tr valign="top">

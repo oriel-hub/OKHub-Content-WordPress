@@ -76,7 +76,7 @@ function okhubimport_get_datasets() {
 function okhubimport_display_datasets($area) {
   global $okhub_datasets;
   $display_dataset = array();
-  //$datasets = $okhub_datasets;
+  $datasets = $okhub_datasets;
   //$display_dataset['admin'] = okhubapi_variable_get('okhubimport', 'display_dataset_admin', OKHUB_IMPORT_DEFAULT_DATASET_ADMIN);
   $display_dataset['admin'] = okhubapi_variable_get('okhubimport', 'default_dataset', OKHUB_IMPORT_DEFAULT_DATASET_ADMIN);
   $display_dataset['public'] = okhubapi_variable_get('okhubimport', 'display_dataset_public', OKHUB_IMPORT_DEFAULT_DATASET_PUBLIC);
@@ -132,7 +132,7 @@ function okhubimport_validate_options($input) {
   }
   if ($okhubimport_api_key_validated) {
     $input['include_imported_documents'] = (isset($input['include_imported_documents']) && $input['include_imported_documents']);
-    $input['include_imported_organisations'] = (isset($input['include_imported_organisations']) && $input['include_imported_organisations']);
+    //$input['include_imported_organisations'] = (isset($input['include_imported_organisations']) && $input['include_imported_organisations']);
     $input['import_new_categories'] = (isset($input['import_new_categories']) && $input['import_new_categories']);
     $input['import_map_categories'] = (isset($input['import_map_categories']) && $input['import_map_categories']);
     $input['import_tags'] = (isset($input['import_tags']) && $input['import_tags']);
@@ -201,7 +201,8 @@ function okhubimport_validate_options($input) {
       }
     }
     $warning_paths = '';
-    foreach (array('documents', 'organisations') as $asset_type) {
+    //foreach (array('documents', 'organisations') as $asset_type) {
+    foreach (array('documents') as $asset_type) {
       if (isset($input['okhub_'.$asset_type.'_path']) && !$error) {
         if (!isset($input['okhub_'.$asset_type.'_old_path']) || ($input['okhub_'.$asset_type.'_path'] !== $input['okhub_'.$asset_type.'_old_path'])) { 
           if (preg_match($reg_path, $input['okhub_'.$asset_type.'_path'])) { // We always validate a new path.
@@ -231,7 +232,7 @@ function okhubimport_validate_options($input) {
   }
   else {
     $input['include_imported_documents'] = okhubapi_variable_get('okhubimport', 'include_imported_documents', OKHUB_IMPORT_INCLUDE_IMPORTED_DOCUMENTS);
-    $input['include_imported_organisations'] = okhubapi_variable_get('okhubimport', 'include_imported_organisations', OKHUB_IMPORT_INCLUDE_IMPORTED_ORGANISATIONS);
+    //$input['include_imported_organisations'] = okhubapi_variable_get('okhubimport', 'include_imported_organisations', OKHUB_IMPORT_INCLUDE_IMPORTED_ORGANISATIONS);
     $input['import_new_categories'] = okhubapi_variable_get('okhubimport', 'import_new_categories', OKHUB_IMPORT_NEW_CATEGORIES);
     $input['import_map_categories'] = okhubapi_variable_get('okhubimport', 'import_map_categories', OKHUB_IMPORT_MAP_CATEGORIES);
     $input['import_tags'] = okhubapi_variable_get('okhubimport', 'import_tags', OKHUB_IMPORT_TAGS);

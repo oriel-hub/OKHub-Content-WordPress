@@ -12,9 +12,8 @@ global $ids_exclude;
 
 
 $okhub_datasets = array('hub');
-//$ids_assets = array('documents', 'organisations');
 $okhub_assets = array('documents','organisations');
-$okhub_categories = array('countries', 'regions', 'themes');
+$okhub_categories = array('countries');
 
 global $okhubapi_errors;
 $okhubapi_errors = array();

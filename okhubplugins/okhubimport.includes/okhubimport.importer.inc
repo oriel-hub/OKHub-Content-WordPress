@@ -116,8 +116,8 @@ class OKHUB_Importer extends WP_Importer {
     global $okhub_exclude;
     $date = date(DATE_RFC822);
     $okhubimport_new_categories = okhubapi_variable_get('okhubimport', 'import_new_categories', OKHUB_IMPORT_NEW_CATEGORIES);
-    $okhubimport_import_dates = okhubapi_variable_get('okhubimport', 'import_dates', array('eldis' => array(), 'bridge' => array()));
-    $okhubimport_import_results = okhubapi_variable_get('okhubimport', 'import_results', array('eldis' => array(), 'bridge' => array()));
+    $okhubimport_import_dates = okhubapi_variable_get('okhubimport', 'import_dates', array('hub' => array()));
+    $okhubimport_import_results = okhubapi_variable_get('okhubimport', 'import_results', array('hub' => array()));
     $datasets = okhubimport_get_datasets();
     foreach ($datasets as $dataset) {
       // Import selected categories (if the option is enabled).
@@ -150,9 +150,9 @@ class OKHUB_Importer extends WP_Importer {
     global $okhub_sources;
     $updated_assets = okhubapi_variable_get('okhubimport', 'updated_assets', OKHUB_IMPORT_UPDATED_ASSETS);
     $this->terms[$dataset][$type] = array('new' => 0, 'updated' => 0, 'skipped' => 0, 'duplicated' => 0);
-    if (!okhubapi_exclude($dataset, $type)) {
+    //if (!okhubapi_exclude($dataset, $type)) {
       if ($assets = $this->retrieve_content($dataset, $type)) {
-        if (!empty($assets)) {
+        if (!empty($assets)) {	
           $post_type = 'okhub_' . $type;
           $object_id_field = $dataset . '_object_id';
           if (post_type_exists($post_type)) {
@@ -178,7 +178,7 @@ class OKHUB_Importer extends WP_Importer {
                   $old_date_updated = strtotime($old_date_updated);
                 }
                 if ($post_status == 'pending' || $post_status == 'publish') {
-                  if ((strtotime($asset['source']['date_updated']) > $old_date_updated)) { // the new version is more recent
+                  if ((strtotime($asset[$source]['date_updated']) > $old_date_updated)) { // the new version is more recent
                     switch ($updated_assets) {
                       case 'overwrite':                 
                         $post_id = okhubimport_update_asset($post_id, $dataset, $post_type, $asset, $source);
@@ -259,7 +259,7 @@ class OKHUB_Importer extends WP_Importer {
           okhubapi_register_error('okhubimport', __('Sorry, we cannot find any content that matches your criteria. Please remove some filters or search more generally and try again.'), 'OKHUB_Importer::import_assets', 'notification', FALSE);
         }
       }
-    }
+    //}
   }
 
   // Import categories.
@@ -412,9 +412,6 @@ class OKHUB_Importer extends WP_Importer {
       $offset = 0;
       $more_results = TRUE;
       while ((!$num_requested || ($num_retrieved < $num_requested)) && $more_results) {
-        /*if ($offset) {
-          $filter_params['start_offset'] = $offset;
-        }*/
         $response = $response = $okhubapi->search($type, $dataset, $api_key, $format, $num_requested, $age_results, $offset, $filter_params);
         if ($response->isError()) {
           $error_message = __('No content retrieved by the API call. ') . $response->getErrorMessage();
@@ -478,7 +475,7 @@ class OKHUB_Importer extends WP_Importer {
 //------------------------ Functions to manage imported content ------------------------
 
 // Create new post with imported asset.
-function okhubimport_insert_asset($dataset, $post_type, $asset, $source, $duplicated = FALSE) {
+function okhubimport_insert_asset($dataset, $post_type, $assets, $duplicated = FALSE) {
   global $okhub_sources;
   $import_keywords = okhubapi_variable_get('okhubimport', 'import_tags', OKHUB_IMPORT_TAGS);
   $import_additional_languages = okhubapi_variable_get('okhubimport', 'additional_languages', array());
@@ -492,15 +489,16 @@ function okhubimport_insert_asset($dataset, $post_type, $asset, $source, $duplic
   $themes_taxonomy = $dataset . '_themes';
   $object_id_field = $dataset . '_object_id';
   $post = array();
-  /*$default_language = okhubapi_variable_get('okhubimport', 'language', OKHUB_IMPORT_DEFAULT_LANGUAGE);
-  $title = okhub_get_translation($asset, 'title', $default_language);
+  $default_language = okhubapi_variable_get('okhubimport', 'language', OKHUB_IMPORT_DEFAULT_LANGUAGE);
+  /*$title = okhub_get_translation($asset, 'title', $default_language);
   $description = okhub_get_translation($asset, 'description', $default_language*/
   foreach($okhub_sources as $sources){
-  	if ($asset[$sources]['title'] != ""){
+  	if ($assets[$sources]['title'] != ""){
   		$source = $sources;	
   	}
   }
-  $asset = $asset[$source];
+  $asset = $assets[$source];
+  //error_log(json_encode($asset),0);
   $post['post_title'] = $asset['title'];
   $post['post_name'] = sanitize_title($asset['title']);
   if ('hub' == okhubapi_variable_get('okhubimport', 'default_dataset', OKHUB_IMPORT_DEFAULT_DATASET_ADMIN)) {
@@ -532,40 +530,50 @@ function okhubimport_insert_asset($dataset, $post_type, $asset, $source, $duplic
   $post_id  = wp_insert_post($post);
   if (is_admin() && OKHUB_IMPORT_VERBOSE_IMPORT) {
     if ($duplicated) {
-      $output = $title . ' - ' . __('new version of existing post');
+      $output = $asset['title'] . ' - ' . __('new version of existing post');
     }
     else {
-      $output = $title . ' - ' . __('new');
+      $output = $asset['title'] . ' - ' . __('new');
     }
     //echo okhub_div_field_wrapper('ids-item-output-importer', '', '', $output);
     echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
   }
   if ($post_id) {
-  	  
-    add_post_meta($post_id, $object_id_field, $asset[$source]['object_id'], TRUE);
+ 	  
+    add_post_meta($post_id, $object_id_field, $assets[$source]['object_id'], TRUE);
     // Extra fields that could be not present in 'short' responses.
-    if (isset($asset['site'])) { add_post_meta($post_id, 'site', $asset['site'], TRUE); }
-    if (isset($asset['timestamp'])) { add_post_meta($post_id, 'timestamp', $asset['timestamp'], TRUE); }
+    if (isset($assets['site'])) { add_post_meta($post_id, 'site', $assets['site'], TRUE); }
+    if (isset($assets['timestamp'])) { add_post_meta($post_id, 'timestamp', $assets['timestamp'], TRUE); }
     if (isset($asset['website_url'])) { add_post_meta($post_id, 'website_url', $asset['website_url'], TRUE); }
     if (isset($asset['asset_id'])) { add_post_meta($post_id, 'asset_id', $asset['asset_id'], TRUE); }
     if (isset($asset['date_created'])) { add_post_meta($post_id, 'date_created', $asset['date_created'], TRUE); }
     if (isset($asset['date_updated'])) { add_post_meta($post_id, 'date_updated', $asset['date_updated'], TRUE); }
-    /*if (isset($asset->country_focus_array)) { okhubimport_update_categories_post($post_id, $dataset, $countries_taxonomy, $asset->country_focus_array); }
-    if (isset($asset->category_region_array)) { okhubimport_update_categories_post($post_id, $dataset, $regions_taxonomy, $asset->category_region_array); }
-    if (isset($asset->category_theme_array)) { okhubimport_update_categories_post($post_id, $dataset, $themes_taxonomy, $asset->category_theme_array); }
-    */
-    if (isset($asset->metadata_url)) {
-      $metadata_url = $asset->metadata_url;
+    if (isset($asset['country_focus_array'])) { okhubimport_update_categories_post($post_id, $dataset, $countries_taxonomy, $asset['country_focus_array']); }
+    if (isset($asset['category_region_array'])) { okhubimport_update_categories_post($post_id, $dataset, $regions_taxonomy, $asset['category_region_array']); }
+    if (isset($asset['category_theme_array'])) { okhubimport_update_categories_post($post_id, $dataset, $themes_taxonomy, $asset['category_theme_array']); }
+    if (isset($asset['metadata_url'])) {
+      $metadata_url = $asset['metadata_url'];
       if ($okhub_api_key) {
         $metadata_url .= '?' . OKHUB_API_KEY_PAR . '=' . $okhub_api_key;
       }
       add_post_meta($post_id, 'metadata_url', $metadata_url, TRUE);
     }
-    if (($import_keywords) && (isset($asset->keywords))) {
-      wp_set_post_tags($post_id, $asset->keywords, TRUE);
+    if (($import_keywords) && (isset($asset['hub_themes']))) {
+      wp_set_post_tags($post_id, $asset['hub_themes'], false);
+    }
+    if (isset($asset['hub_country'])){
+    		    
+    }
+    
+    if (isset($asset['hub_region'])){
+    
     }
     if ($post_type == 'okhub_documents') {
     // Document-specific fields.
+      //$cat = wp_create_category('OKHub Documents',0);
+      //wp_set_post_categories($post_id,$cat,false);
+     
+      
       if (isset($asset['authors'])) { add_post_meta($post_id, 'authors', $asset['authors']); }
       if (isset($asset['language_name'])) { add_post_meta($post_id, 'language_name', $asset['language_name'], TRUE); }
       if (isset($asset['publication_date'])) { add_post_meta($post_id, 'publication_date', $asset['publication_date'], TRUE); }
@@ -575,41 +583,15 @@ function okhubimport_insert_asset($dataset, $post_type, $asset, $source, $duplic
       if (isset($asset['publisher_country'])) { add_post_meta($post_id, 'publisher_country', $asset['publisher_country'], TRUE); }
       if (isset($asset['document_type'])) { add_post_meta($post_id, 'document_type', $asset['document_type'], TRUE); }
       if (isset($asset['url'])) { add_post_meta($post_id, 'urls', $asset['url']); }
-      
-       /*if (isset($asset->authors)) { okhubimport_add_post_array_meta($post_id, 'authors', $asset->authors); }
-      if (isset($asset->language_name)) { add_post_meta($post_id, 'language_name', $asset->language_name, TRUE); }
-      if (isset($asset->publication_date)) { add_post_meta($post_id, 'publication_date', $asset->publication_date, TRUE); }
-      if (isset($asset->publication_year)) { add_post_meta($post_id, 'publication_year', $asset->publication_year, TRUE); }
-      if (isset($asset->licence_type)) { add_post_meta($post_id, 'licence_type', $asset->licence_type, TRUE); }
-      if (isset($asset->publisher)) { add_post_meta($post_id, 'publisher', $asset->publisher, TRUE); }
-      if (isset($asset->publisher_country)) { add_post_meta($post_id, 'publisher_country', $asset->publisher_country, TRUE); }
-      if (isset($asset->document_type)) { add_post_meta($post_id, 'document_type', $asset->document_type, TRUE); }
-      if (isset($asset->urls)) { okhubimport_add_post_array_meta($post_id, 'urls', $asset->urls); }
-     foreach ($import_additional_languages as $lang_code) {
-        foreach (array('title', 'description') as $field) { // Iterate through the translatable fields. This could be generalised.
-          $field_name = $field . '_' . $lang_code;
-          $field_value = okhub_get_translation($asset, $field, $lang_code, FALSE);
-          if ($field_value) {
-            add_post_meta($post_id, $field_name, $field_value, TRUE);
-          }
-        }
-      }*/
-      if (isset($asset->document_type)) {
+
+      /*if (isset($asset['document_type'])) {
         if ($okhubimport_import_document_type == 'field') {
-          okhubimport_add_post_array_meta($post_id, 'document_type', $asset->document_type);
+          okhubimport_add_post_array_meta($post_id, 'document_type', $asset['document_type']);
         }
         else {
-          okhubimport_update_document_types_post($post_id, $dataset, $asset->document_type);
+          okhubimport_update_document_types_post($post_id, $dataset, $asset['document_type']);
         }
-      }
-    }
-    elseif ($post_type == 'okhub_organisations') {
-    // Organisation-specific fields.
-      if (isset($asset->acronym)) { add_post_meta($post_id, 'acronym', $asset->acronym, TRUE); }
-      if (isset($asset->alternative_acronym)) { add_post_meta($post_id, 'alternative_acronym', $asset->alternative_acronym, TRUE); }
-      if (isset($asset->organisation_type)) { add_post_meta($post_id, 'organisation_type', $asset->organisation_type, TRUE); }
-      if (isset($asset->organisation_url)) { add_post_meta($post_id, 'organisation_url', $asset->organisation_url, TRUE); }
-      if (isset($asset->location_country)) { add_post_meta($post_id, 'location_country', $asset->location_country, TRUE); }
+      }*/
     }
   }
   else {
@@ -619,7 +601,7 @@ function okhubimport_insert_asset($dataset, $post_type, $asset, $source, $duplic
 }
 
 // Update post with imported asset.
-function okhubimport_update_asset($post_id, $dataset, $post_type, $asset, $source) {
+function okhubimport_update_asset($post_id, $dataset, $post_type, $assets, $source) {
   global $okhub_sources;
   $import_keywords = okhubapi_variable_get('okhubimport', 'import_tags', '0');
   $import_additional_languages = okhubapi_variable_get('okhubimport', 'additional_languages', array());
@@ -633,15 +615,12 @@ function okhubimport_update_asset($post_id, $dataset, $post_type, $asset, $sourc
   $object_id_field = $dataset . '_object_id';
   $updated_post = array();
   $updated_post['ID'] = $post_id;
-  /*$default_language = okhubapi_variable_get('okhubimport', 'language', OKHUB_IMPORT_DEFAULT_LANGUAGE);
-  $title = okhub_get_translation($asset, 'title', $default_language);
-  $description = okhub_get_translation($asset, 'description', $default_language);*/
   foreach($okhub_sources as $sources){
   	if ($asset[$sources]['title'] != ""){
   		$source = $sources;	
   	}
   }
-  $asset = $asset[$source];
+  $asset = $assets[$source];
   $updated_post['post_title'] = $asset['title'];
   $updated_post['post_excerpt'] = okhub_excerpt_post('okhubimport', $asset['description']);
   $updated_post['post_content'] = $asset['description'];
@@ -658,24 +637,26 @@ function okhubimport_update_asset($post_id, $dataset, $post_type, $asset, $sourc
   if ($new_post_id) {
     update_post_meta($post_id, $object_id_field, $asset['object_id']);
     // Extra fields that could not be present in 'short' responses.
-    if (isset($asset['site'])) { update_post_meta($post_id, 'site', $asset['site']); }
-    if (isset($asset['timestamp'])) { update_post_meta($post_id, 'timestamp', $asset['timestamp']); }
+    if (isset($assets['site'])) { update_post_meta($post_id, 'site', $assets['site']); }
+    if (isset($assets['timestamp'])) { update_post_meta($post_id, 'timestamp', $assets['timestamp']); }
     if (isset($asset['website_url'])) { update_post_meta($post_id, 'website_url', $asset['website_url']); }
     if (isset($asset['asset_id'])) { update_post_meta($post_id, 'asset_id', $asset['asset_id']); }
     if (isset($asset['date_created'])) { update_post_meta($post_id, 'date_created', $asset['date_created']); }
     if (isset($asset['date_updated'])) { update_post_meta($post_id, 'date_updated', $asset['date_updated']); }
-    /*if (isset($asset->country_focus_array)) { okhubimport_update_categories_post($post_id, $dataset, $countries_taxonomy, $asset->country_focus_array); }
-    if (isset($asset->category_region_array)) { okhubimport_update_categories_post($post_id, $dataset, $regions_taxonomy, $asset->category_region_array); }
-    if (isset($asset->category_theme_array)) { okhubimport_update_categories_post($post_id, $dataset, $themes_taxonomy, $asset->category_theme_array); }*/
-    if (isset($asset->metadata_url)) {
-      $metadata_url = $asset->metadata_url;
+    if (isset($asset['country_focus_array'])) { okhubimport_update_categories_post($post_id, $dataset, $countries_taxonomy, $asset['country_focus_array']); }
+    if (isset($asset['category_region_array'])) { okhubimport_update_categories_post($post_id, $dataset, $regions_taxonomy, $asset['category_region_array']); }
+    if (isset($asset['category_theme_array'])) { okhubimport_update_categories_post($post_id, $dataset, $themes_taxonomy, $asset['category_theme_array']); }
+
+    
+    if (isset($asset['metadata_url'])) {
+      $metadata_url = $asset['metadata_url'];
       if ($okhub_api_key) {
         $metadata_url .= '?' . OKHUB_API_KEY_PAR . '=' . $okhub_api_key;
       }
       update_post_meta($post_id, 'metadata_url', $metadata_url);
     }
-    if (($import_keywords) && (isset($asset->keywords))) {
-      wp_set_post_tags($post_id, $asset->keywords, TRUE);
+    if (($import_keywords) && (isset($asset['keywords']))) {
+      wp_set_post_tags($post_id, $asset['keyword'], TRUE);
     }
     if ($post_type == 'okhub_documents') {
     // Document-specific fields.
@@ -689,31 +670,15 @@ function okhubimport_update_asset($post_id, $dataset, $post_type, $asset, $sourc
       if (isset($asset['publisher_country'])) { update_post_meta($post_id, 'publisher_country', $asset['publisher_country']); }
       if (isset($asset['document_type'])) { update_post_meta($post_id, 'document_type', $asset['document_type']); }
       if (isset($asset['url'])) { update_post_meta($post_id, 'urls', $asset['url']); }
-      /*foreach ($import_additional_languages as $lang_code) {
-        foreach (array('title', 'description') as $field) { // Iterate through the translatable fields. This could be generalised.
-          $field_name = $field . '_' . $lang_code;
-          $field_value = okhub_get_translation($asset, $field, $lang_code, FALSE);
-          if ($field_value) {
-            update_post_meta($post_id, $field_name, $field_value);
-          }
-        }
-      }*/
-      if (isset($asset->document_type)) {
+
+      /*if (isset($asset['document_type'])) {
         if ($okhubimport_import_document_type == 'field') {
-          okhubimport_update_post_array_meta($post_id, 'document_type', $asset->document_type);
+          okhubimport_update_post_array_meta($post_id, 'document_type', $asset['document_type']);
         }
         else {
-          okhubimport_update_document_types_post($post_id, $dataset, $asset->document_type);
+          okhubimport_update_document_types_post($post_id, $dataset, $asset['document_type']);
         }
-      }
-    }
-    elseif ($post_type == 'okhub_organisations') {
-    // Organisation-specific fields.
-      if (isset($asset->acronym)) { update_post_meta($post_id, 'acronym', $asset->acronym); }
-      if (isset($asset->alternative_acronym)) { update_post_meta($post_id, 'alternative_acronym', $asset->alternative_acronym); }
-      if (isset($asset->organisation_type)) { update_post_meta($post_id, 'organisation_type', $asset->organisation_type); }
-      if (isset($asset->organisation_url)) { update_post_meta($post_id, 'organisation_url', $asset->organisation_url); }
-      if (isset($asset->location_country)) { update_post_meta($post_id, 'location_country', $asset->location_country); }
+      }*/
     }
   }
   else {
@@ -724,6 +689,7 @@ function okhubimport_update_asset($post_id, $dataset, $post_type, $asset, $sourc
 
 // Gets the category name, looking into the retrieved fields.
 function okhubimport_get_category_name($category) {
+ 
   $category_name = '';
   if (isset($category->title)) {
     $category_name = $category->title;
@@ -750,7 +716,7 @@ function okhubimport_update_children($dataset, $update_children, $taxonomy_name)
 // Create new term with imported category.
 // Returns the term id if everything goes ok, NULL if it could not be inserted.
 // TODO - insert only categories not archived?
-function okhubimport_insert_category($dataset, $taxonomy, $category, $term_args) {
+function okhubimport_insert_category($dataset, $taxonomy, $category, $term_args) {		
   $okhub_api_key = okhubapi_variable_get('okhubimport', 'api_key', '');
   $countries_taxonomy = $dataset . '_countries';
   $regions_taxonomy = $dataset . '_regions';
@@ -760,7 +726,7 @@ function okhubimport_insert_category($dataset, $taxonomy, $category, $term_args)
   if ('all' == okhubapi_variable_get('okhubimport', 'default_dataset', OKHUB_IMPORT_DEFAULT_DATASET_ADMIN)) {
     $term_slug = $dataset . '-' . $term_slug;
   }
-  $term_args['slug'] = $term_slug;
+  $term_args['slug'] = $term_slug;	
   $new_term = wp_insert_term($term_args['name'], $taxonomy, $term_args);
   if (!is_wp_error($new_term)) {
     $term_id = $new_term['term_id'];
@@ -936,6 +902,7 @@ function okhubimport_update_categories_post($post_id, $dataset, $taxonomy, $cate
 function okhubimport_get_mappings($taxonomy_name) {
   $idscats_wpterms = array();
   $mappings = okhubapi_variable_get('okhubimport', $taxonomy_name . '_mappings', array());
+  
   foreach ($mappings as $mapping) {
     $relation = explode(',', $mapping);
     if (isset($relation[0]) && isset($relation[1])) {
@@ -958,8 +925,9 @@ function okhubimport_update_categories_term($term_id, $dataset, $taxonomy, $cate
 function okhubimport_get_okhub_categories_terms_ids($dataset, $taxonomy, $categories) {
   $terms_ids = array();
   foreach ($categories as $category) {
+   
     $category_name = okhubimport_get_category_name($category);
-    if ($category_name) {
+    if (!empty($category_name)) {
       $category_name .= " ($category->object_id)";
       if ($term = term_exists($category_name, $taxonomy)) {
         if (is_array($term)) {
@@ -972,7 +940,7 @@ function okhubimport_get_okhub_categories_terms_ids($dataset, $taxonomy, $catego
       else { // The term does not exist, insert it.
         $term_id = okhubimport_insert_category($dataset, $taxonomy, $category, array('name' => $category_name));
       }
-      if ($term_id) {
+      if (!empty($term_id)) {
         $terms_ids[] = $term_id;
       }
       else {

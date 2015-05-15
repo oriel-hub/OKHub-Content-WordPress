@@ -14,8 +14,8 @@ class OkhubApiObject {
 
   // Type of object. String. (Document, Publication, Theme, Region, Country).
   public $object_type;
-  public $item_type;
-  public $timestamp;
+  //public $item_type;
+  //public $timestamp;
 
   // Readable identifier of this object.
  
@@ -45,7 +45,7 @@ class OkhubApiObject {
     switch ($object_type) {
       case 'assets': //not in use for okhub
         return new OkhubApiObjectAsset($object);
-      case 'documents':
+      case 'documents':      	      
         return new OkhubApiObjectAssetDocument($object);
       case 'organisations':
         return new OkhubApiObjectAssetOrganisation($object);
@@ -190,11 +190,15 @@ abstract class OkhubApiObjectAsset extends OkhubApiObject {
       $this->date_updated = $object['date_updated']['hub'];
     }
     if (isset($object['category_theme_array'])) {
-      $this->category_theme_array = build_array_categories($object['category_theme_array']);
+    	    foreach($object['category_theme_array'] as $s=>$v){
+    	    	    $this->category_theme_array[$s] = _okhubwrapper_build_array_categories($v);
+    	    }
     }
     if (isset($object['category_subject_array'])) {
-      $this->category_subject_array = build_array_categories($object['category_subject_array']);
-    }
+    	     foreach($object['category_subject_array'] as $s=>$v){
+    	     	     $this->category_subject_array[$s] = _okhubwrapper_build_array_categories($v);
+    	     } 
+     }
     if (isset($object['category_region_path'])) {
       $this->category_region_path = $object['category_region_path'];
     }
@@ -307,6 +311,14 @@ class OkhubApiObjectAssetDocument extends OkhubApiObjectAsset {
 
   // Type of document. Array of strings.
   public $document_type;
+  public $hub_region;
+  public $hub_country;
+  public $hub_timestamp;
+  public $hub_sources;
+  public $document_medium;
+  public $country_focus;
+  public $category_region_array; 
+  public $country_focus_array; 
   
    // Type of document. Array of strings.
   //public $bridge_document_type;
@@ -342,7 +354,7 @@ class OkhubApiObjectAssetDocument extends OkhubApiObjectAsset {
       $this->metadata_languages = $object['metadata_languages'];
     }
     if (isset($object['language_array'])) {
-      $this->language_array = build_array_languages($object['metadata_languages']);
+      $this->language_array = _okhubwrapper_build_array_languages($object['metadata_languages']);
     }
     if (isset($object['publication_date'])) {
       $this->publication_date = $object['publication_date'];
@@ -385,11 +397,43 @@ class OkhubApiObjectAssetDocument extends OkhubApiObjectAsset {
       $this->document_type = $object['document_type'];
     }
     if (isset($object['hub_country'])) {
-      $this->hub_country = $object['hub_country'];
+    	    foreach($object['hub_country'] as $s=>$v){
+    	    	    $this->hub_country[$s] = $v;
+    	    }
+    }
+   if (isset($object['country_focus'])) {
+    	    foreach($object['country_focus'] as $s=>$v){
+    	    	    $this->country_focus[$s] = $v;
+    	    }
+    }
+    if (isset($object['hub_timestamp'])) {
+      $this->hub_timestamp = $object['hub_timestamp'];
     }
     if (isset($object['hub_region'])) {
-      $this->hub_region = $object['hub_region'];
+    	  foreach($object['hub_region'] as $s=>$v){ // $s is source, $v is value
+    	  	  $this->hub_region[$s] = $v;
+      	  }
+    
+     }
+     if (isset($object['sources'])) {
+      $this->hub_sources = $object['sources'];
     }
+    if (isset($object['document_medium'])){
+    	    foreach($object['document_medium'] as $s=>$v){
+    	    	    $this->document_medium[$s] = $v;	    
+    	    }
+    }
+    
+    if (isset($object['category_region_array'])) {
+    	    foreach($object['category_region_array'] as $s=>$v){
+    	    	    $this->category_region_array[$s] = _okhubwrapper_build_array_categories($v);
+    	    }	    
+    } 
+    if (isset($object['country_focus_array'])) {
+    	    foreach($object['country_focus_array'] as $s=>$v){
+    	    	    $this->country_focus_array[$s] = _okhubwrapper_build_array_categories($v);
+    	    }	    
+    }  
   }
 
 }
@@ -591,7 +635,7 @@ class OkhubApiObjectCountry extends OkhubApiObject {
   //public $asset_id;
 
   // Regions. Array of regions (OkhubApiObjectCategory). Regions to which this country belongs.
-  public $category_region_array;  
+   
 
   // ISO number. Example: 50 (Bangladesh).
   public $iso_number;
@@ -613,9 +657,11 @@ class OkhubApiObjectCountry extends OkhubApiObject {
     if (isset($object['asset_id'])) {
       $this->asset_id = $object['asset_id'];
     }
-    if (isset($object['category_region_array'])) {
-     // $this->category_region_array = build_array_categories($object['category_region_array']);
-    }  
+    /*if (isset($object['category_region_array'])) {
+    	    foreach($object['category_region_array'] as $s=>$v){
+    	    	    $this->category_region_array[$s] = _okhubwrapper_build_array_categories($v);
+    	    }	    
+    }  */
     if (isset($object['iso_number'])) {
       $this->iso_number = $object['iso_number'];
     }
@@ -671,19 +717,19 @@ class OkhubApiCount {
 
 /* --------------------------- Helper functions ------------------------- */
 
-function build_array_categories($array_categories) {
+function _okhubwrapper_build_array_categories($array_categories) {
   $categories = array();
   if (is_array($array_categories)) {
     foreach (current($array_categories) as $s=>$category) {
-      foreach($category as $m=>$z){
-      	      $categories[] = new OkhubApiObjectCategory($z);
-      }
+      //foreach($category as $m=>$z){
+      	      $categories[] = new OkhubApiObjectCategory($category);
+      //}
     }
   }
   return $categories;
 }
 
-function build_array_countries($array_countries) {
+function _okhubwrapper_build_array_countries($array_countries) {
   $countries = array();
   if (is_array($array_countries)) {
     foreach (current($array_countries) as $country) {
@@ -693,7 +739,7 @@ function build_array_countries($array_countries) {
   return $countries;
 }
 
-function build_array_organisations($array_organisations) {
+function _okhubwrapper_build_array_organisations($array_organisations) {
   $organisations = array();
   if (is_array($array_organisations)) {
     foreach (current($array_organisations) as $organisation) {
@@ -703,7 +749,7 @@ function build_array_organisations($array_organisations) {
   return $organisations;
 }
 
-function build_array_languages($language_array) {
+function _okhubwrapper_build_array_languages($language_array) {
   $languages = array();
   if (is_array($language_array)) {
     foreach (current($language_array) as $language) {
