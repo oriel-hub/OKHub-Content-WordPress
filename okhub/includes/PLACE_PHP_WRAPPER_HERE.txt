@@ -1,0 +1,2 @@
+Please note that the OKHub PHP Wrapper is required for this plugin to work.
+Download it from GitHub https://github.com/oriel-hub/OKHub-php-Wrapper/archive/master.zip
