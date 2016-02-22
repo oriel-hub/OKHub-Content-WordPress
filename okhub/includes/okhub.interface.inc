@@ -181,6 +181,12 @@ function okhub_importer_form() {
           <?php } ?>
         </td>
       </tr>
+      <tr valign="top">
+        <th scope="row"><?php _e('Force updates'); ?></th>
+        <td>
+          <label><input name="okhub_force_update" type="checkbox" /> <?php _e('Update existing assets independently of the date in which they were previously imported or updated'); ?></label>
+        </td>
+      </tr>
     </table>
     <?php wp_nonce_field('okhub_import', 'okhub_import_check_referrer'); ?>
     <p class="submit okhub-button">
@@ -560,12 +566,6 @@ function okhub_render_form() {
           <?php
           foreach ($okhub_categories as $category) {
             if (okhub_has_content($dataset, $category)) {
-              if (in_array($dataset, $selected_datasets)) {
-                $load = FALSE;
-              }
-              else {
-                $load = TRUE;
-              }
               $field_id = $dataset.'_'.$category.'_assets';
               $option_name = $dataset.'_'.$category.'_assets';
               $category_name = okhub_get_type_name($category, TRUE);
@@ -573,10 +573,9 @@ function okhub_render_form() {
               <tr class="okhub-categories-<?php echo $dataset; ?>">
               <th scope="row"><?php _e($category_name); ?></th>
                 <td>
-                  <select data-placeholder="..." class="chosen-select" style="width:350px;" tabindex="4" id='<?php echo $field_id; ?>' name='okhub_options[<?php echo $option_name; ?>][]' multiple></select>
-                  <!--?php if ($load) { ?-->
-                    <input class="button-primary okhub-load-<?php echo $dataset; ?>-<?php echo $category; ?>" type="button" value="Update <?php echo $category_name; ?>..." onClick="updateSelectBoxes('<?php echo $dataset; ?>','<?php  echo $category; ?>')">
-                  <!--?php } ?-->
+                  <select data-placeholder="Select..." class="chosen-select" style="width:350px;" tabindex="4" id='<?php echo $field_id; ?>' name='okhub_options[<?php echo $option_name; ?>][]' multiple></select>
+                  <input class="button-primary okhub-load-<?php echo $dataset; ?>-<?php echo $category; ?>" type="button" value="Load" onClick="loadTaxonomies('<?php echo $dataset; ?>','<?php  echo $category; ?>', 0)">
+                  <input class="button-primary okhub-refresh-buttons okhub-refresh-<?php echo $dataset; ?>-<?php echo $category; ?>" type="button" value="Refresh" onClick="loadTaxonomies('<?php echo $dataset; ?>','<?php  echo $category; ?>', 1)">
                   <p class="description"><?php _e("Import only documents/organisations with the selected focus $category."); ?>
                   <!--a href="javascript:selectAll('<?php echo $field_id; ?>');"><?php _e('Select all'); ?></a> /--> 
                   <a href="javascript:deselectAll('<?php echo $field_id; ?>');"><?php _e('Deselect all'); ?></a>

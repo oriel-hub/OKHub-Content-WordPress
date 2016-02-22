@@ -114,13 +114,14 @@ class OkhubImporter extends WP_Importer {
     $okhub_new_categories = okhubapi_variable_get('okhub', 'import_new_categories', OKHUB_NEW_CATEGORIES);
     $okhub_import_dates = okhubapi_variable_get('okhub', 'import_dates', array());
     $okhub_import_results = okhubapi_variable_get('okhub', 'import_results', array());
+    $force_update = !empty($_POST['okhub_force_update']);
     foreach ($datasets as $dataset) {
       // Import selected categories (if the option is enabled).
       if ($okhub_new_categories) {
         foreach ($okhub_categories as $category) {
           $parameter_name = 'okhub_import_' . $category;
-          if (isset($_POST[$parameter_name]) && ($_POST[$parameter_name])) {
-            $this->import_categories($dataset, $category);
+          if (!empty($_POST[$parameter_name])) {
+            $this->import_categories($dataset, $category, $force_update);
             $okhub_import_dates[$dataset][$category] = $date;
             $okhub_import_results[$dataset][$category] = $this->terms[$dataset][$category];
           }
@@ -129,8 +130,8 @@ class OkhubImporter extends WP_Importer {
       // Import selected assets.
       foreach ($okhub_assets as $asset) {
         $parameter_name = 'okhub_import_' . $asset;
-        if (isset($_POST[$parameter_name]) && ($_POST[$parameter_name])) {
-          $this->import_assets($dataset, $asset);
+        if (!empty($_POST[$parameter_name])) {
+          $this->import_assets($dataset, $asset, $force_update);
           $okhub_import_dates[$dataset][$asset] = $date;
           $okhub_import_results[$dataset][$asset] = $this->terms[$dataset][$asset];
         }
@@ -141,7 +142,7 @@ class OkhubImporter extends WP_Importer {
   }
 
   // Import assets.
-  function import_assets($dataset, $type) {
+  function import_assets($dataset, $type, $force_update) {
     $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
     $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes', array_keys(okhub_languages())); 
     $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
@@ -161,7 +162,6 @@ class OkhubImporter extends WP_Importer {
               $titles = okhub_api_value_languages($asset, OKHUB_API_FN_TITLE, $dataset, $preferred_languages);
               $hub_id = okhub_get_api_value($asset, OKHUB_API_FN_ITEM_ID);
               if ($titles && $hub_id) {
-                //echo "ASSET $hub_id:\n";             
                 $title = current($titles);
                 if ($post_id = okhub_get_id_by_meta('post', OKHUB_WP_FN_HUB_ITEM_ID, $hub_id)) { // The item already exists in WP (maybe not for the same dataset).
                   $post_status = get_post_status($post_id);
@@ -169,15 +169,18 @@ class OkhubImporter extends WP_Importer {
                   if (in_array($dataset, $post_sources) && ($post_status == 'pending' || $post_status == 'publish')) { // There's content for this source and the status is pending or publish.
                     // Compare latest hub timestamp in WP for the source with the hub timestamp in the API response.
                     // It's necessary to consider the source because the post could have been updated more recently for another source.
-                    $old_hub_timestamp = get_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_HUB_TIMESTAMP, $dataset), TRUE);
-                    if (!is_numeric($old_hub_timestamp)) {
-                      $old_hub_timestamp = strtotime($old_hub_timestamp);
+                    if (!$force_update) {
+                      $old_hub_timestamp = get_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_HUB_TIMESTAMP, $dataset), TRUE);
+                      if (!is_numeric($old_hub_timestamp)) {
+                        $old_hub_timestamp = strtotime($old_hub_timestamp);
+                      }
+                      $current_hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP);
+                      if (!is_numeric($current_hub_timestamp)) {
+                        $current_hub_timestamp = strtotime($current_hub_timestamp);
+                      }
+                      $force_update = (!$old_hub_timestamp || !$current_hub_timestamp || $current_hub_timestamp > $old_hub_timestamp);
                     }
-                    $current_hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP);
-                    if (!is_numeric($current_hub_timestamp)) {
-                      $current_hub_timestamp = strtotime($current_hub_timestamp);
-                    }
-                    if (!$old_hub_timestamp || !$current_hub_timestamp || $current_hub_timestamp > $old_hub_timestamp) { // The date is not defined or the new version is more recent.
+                    if ($force_update) { // The date is not defined, the new version is more recent or the update was forced.
                       switch ($updated_assets) {
                         case 'overwrite':   
                           $post_id = okhub_update_asset($post_id, $dataset, $post_type, $asset);
@@ -212,7 +215,7 @@ class OkhubImporter extends WP_Importer {
                   else { // The existing version is not published or pending - or there's no content for this source. We update it.
                     if ($post_id = okhub_update_asset($post_id, $dataset, $post_type, $asset)) {
                       if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                        $output = $title . ' - ' . $post_status . __(' updated');
+                        $output = $title . ' - ' . __(' updated');
                         echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
                       }
                       $this->terms[$dataset][$type]['updated']++;
@@ -242,7 +245,7 @@ class OkhubImporter extends WP_Importer {
   }
 
   // Import categories.
-  function import_categories($dataset, $type) {
+  function import_categories($dataset, $type, $force_update) {
   $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
   $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes',  array_keys(okhub_languages())); 
   $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
@@ -441,7 +444,6 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
   $okhub_import_user_id = okhubapi_variable_get('okhub', 'import_user_id', '0');
   $okhub_api_key = okhubapi_variable_get('okhub', 'api_key', '');
   $okhub_pub_date = okhubapi_variable_get('okhub', 'pub_date', 'default');
-  //$okhub_import_document_type = okhubapi_variable_get('okhub', 'import_document_type_'.$dataset, 'field');
   $post_status = okhubapi_variable_get('okhub', 'post_status', OKHUB_DEFAULT_POST_STATUS);
   // Add retrieved values to post.
   $post = array();
@@ -480,7 +482,7 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
     // ---------- Hidden metadata - title, description, sources ----------
     add_post_meta($post_id, OKHUB_WP_FN_HIDDEN_TITLE_LANGUAGE, $title_lang, TRUE);
     add_post_meta($post_id, OKHUB_WP_FN_HIDDEN_CONTENT_LANGUAGE, $description_lang, TRUE);
-    add_post_meta($post_id, OKHUB_WP_FN_HIDDEN_SOURCES, okhub_get_api_value($asset, OKHUB_API_FN_SOURCES));
+    add_post_meta($post_id, OKHUB_WP_FN_HIDDEN_SOURCES, $dataset);
     // ---------- Hub fields ----------
     add_post_meta($post_id, OKHUB_WP_FN_HUB_ITEM_ID, okhub_get_api_value($asset, OKHUB_API_FN_ITEM_ID), TRUE);
     add_post_meta($post_id, OKHUB_WP_FN_HUB_METADATA_URL, okhub_get_api_value($asset, OKHUB_API_FN_METADATA_URL), TRUE);
@@ -528,7 +530,12 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
           $field_name = okhub_source_field_name($field, $dataset, $lang_code);
           $field_value = okhub_get_api_value($asset, $field, $dataset, $lang_code);
           if ($field_value) {
-            add_post_meta($post_id, $field_name, $field_value, TRUE);
+            if (is_scalar($field_value)) {
+              add_post_meta($post_id, $field_name, $field_value, TRUE);
+            }
+            elseif (is_array($field_value)) {
+              okhub_add_post_array_meta($post_id, $field_name, $field_value);
+            }
           }
         }
       }
@@ -556,7 +563,6 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
   $okhub_import_user_id = okhubapi_variable_get('okhub', 'import_user_id', '0');
   $okhub_api_key = okhubapi_variable_get('okhub', 'api_key', '');
   $okhub_pub_date = okhubapi_variable_get('okhub', 'pub_date', 'default');
-  //$okhub_import_document_type = okhubapi_variable_get('okhub', 'import_document_type_'.$dataset, 'field');
   $updated_post = array();
   $updated_post['ID'] = $post_id;
   $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
@@ -598,7 +604,7 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
     // ---------- Hidden metadata - title, description, sources ----------
     if ($update_title) { update_post_meta($post_id, OKHUB_WP_FN_HIDDEN_TITLE_LANGUAGE, $title_lang); }
     if ($update_description) { update_post_meta($post_id, OKHUB_WP_FN_HIDDEN_CONTENT_LANGUAGE, $description_lang); }
-    update_post_meta($post_id, OKHUB_WP_FN_HIDDEN_SOURCES, okhub_get_api_value($asset, OKHUB_API_FN_SOURCES));
+    add_post_meta($post_id, OKHUB_WP_FN_HIDDEN_SOURCES, $dataset);
     // ---------- Hub fields ----------
     //update_post_meta($post_id, OKHUB_WP_FN_HUB_ITEM_ID, okhub_get_api_value($asset, OKHUB_API_FN_ITEM_ID));
     update_post_meta($post_id, OKHUB_WP_FN_HUB_METADATA_URL, okhub_get_api_value($asset, OKHUB_API_FN_METADATA_URL));
@@ -644,7 +650,12 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
           $field_name = okhub_source_field_name($field, $dataset, $lang_code);
           $field_value = okhub_get_api_value($asset, $field, $dataset, $lang_code);
           if ($field_value) {
-            update_post_meta($post_id, $field_name, $field_value);
+            if (is_scalar($field_value)) {
+              update_post_meta($post_id, $field_name, $field_value);
+            }
+            elseif (is_array($field_value)) {
+              okhub_update_post_array_meta($post_id, $field_name, $field_value);
+            }
           }
         }
       }

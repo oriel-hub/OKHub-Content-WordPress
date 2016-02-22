@@ -29,7 +29,12 @@ function okhub_get_okhub_by_meta($type, $meta_key, $meta_value) {
 // Add multiple-value metadata in posts.
 function okhub_add_post_array_meta($post_id, $meta_key, $array_values) {
   foreach ($array_values as $meta_value) {
-    add_post_meta($post_id, $meta_key, $meta_value, FALSE);
+    if (is_scalar($meta_value)) {
+      add_post_meta($post_id, $meta_key, $meta_value, FALSE);
+    }
+    elseif (is_array($meta_value)) {
+      okhub_add_post_array_meta($post_id, $meta_key, $meta_value);
+    }
   }
 }
 
@@ -37,7 +42,12 @@ function okhub_add_post_array_meta($post_id, $meta_key, $array_values) {
 function okhub_update_post_array_meta($post_id, $meta_key, $array_values) {
   delete_post_meta($post_id, $meta_key);
   foreach ($array_values as $meta_value) {
-    add_post_meta($post_id, $meta_key, $meta_value, FALSE);
+    if (is_scalar($meta_value)) {
+      add_post_meta($post_id, $meta_key, $meta_value, FALSE);
+    }
+    elseif (is_array($meta_value)) {
+      okhub_update_post_array_meta($post_id, $meta_key, $meta_value);
+    }
   }
 }
 
@@ -185,8 +195,7 @@ function okhub_common_metabox_edit($term) {
   $level = okhub_get_term_meta($term->term_id, 'level', true);
   $input_field = okhub_input_field('level', 10, $level, 'level', __('Level'), __('Position in the hierarchy, starting at 1, the top level'), 'input-metabox', 'true');
   echo okhub_tr_field_wrapper('form-field', 'level', __('Level'), $input_field);
-  
-  // TODO: UPDATE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  // TODO: UPDATE THIS!!!
   /* Category parent */
   $cat_parent = okhub_get_term_meta($term->term_id, 'cat_parent', true);
   $input_field = okhub_input_field('cat_parent', 10, $cat_parent, 'cat_parent', __('Category parent'), __('Parent item id'), 'input-metabox', 'true');

@@ -60,6 +60,8 @@ define('OKHUB_WP_FN_HIDDEN_NAME_LANGUAGE', '_current_name_language');
 
 /* ---- Other settings. Most of these settings can and should be changed through the plugin's administrative page. ---- */
 
+define('OKHUB_MAX_REQUESTED_ASSETS', 100); // Maximum number of documents/organisations that can be selected for each datasource to be imported at once.
+define('OKHUB_HARD_LIMIT_ASSETS', 300); // The search space is three times the max. number of items, in order not to keep searching forever assets that might not match the filters.
 define('OKHUB_DEFAULT_DATASET', 'eldis');
 define('OKHUB_DEFAULT_LANGUAGE', 'en');
 define('OKHUB_DEFAULT_POST_STATUS', 'publish');

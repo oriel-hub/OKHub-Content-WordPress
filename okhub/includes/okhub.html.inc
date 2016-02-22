@@ -609,13 +609,11 @@ var okhub_plugin = 'okhub';
 var datasets = <?php echo $datasets_array; ?>;
 var selected_datasets = <?php echo $selected_datasets; ?>;
 var home_url = '<?php echo get_site_url(); ?>';
-var okhub_array_categories;
-var okhub_array_categories_mappings;
+var okhub_array_categories = [];
+var okhub_array_categories_mappings = [];
 var selected_categories_mappings = <?php echo $sel_categories; ?>;
 var selected_categories = <?php echo $sel_categories; ?>;
 var $jqorig = jQuery.noConflict();
-var $jqtree = jQuery.noConflict();
-var $jqchosen = jQuery.noConflict();
 
 function initCategoriesArrays() {
   //okhub_array_trees_themes = {'eldis':{}, 'bridge':{}};
@@ -641,9 +639,11 @@ function initCategoriesArrays() {
 <?php
 }
 
-function okhub_javscript_trigger() {
+function okhub_javascript_trigger() {
   if (get_query_var('okhub_javascript') && ($dataset=get_query_var('okhub_source')) && ($category=get_query_var('okhub_category'))) {
-    echo okhub_js_array(okhub_get_category_array($dataset, $category));
+    $force_update = get_query_var('okhub_refresh');
+    $categories = okhub_get_category_array($dataset, $category, $force_update);
+    echo okhub_js_array($categories);
     exit;
   }
 }

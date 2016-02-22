@@ -9,9 +9,6 @@
 // Environment in which we are using the API wrapper. Possible values: 'generic', 'wordpress', 'drupal'. Default is 'generic'.
 if (!defined('OKHUB_API_ENVIRONMENT')) define('OKHUB_API_ENVIRONMENT', 'wordpress');
 
-define('OKHUB_MAX_REQUESTED_ASSETS', 100); // Maximum number of documents/organisations that can be selected for each datasource to be imported at once.
-define('OKHUB_HARD_LIMIT_ASSETS', 300); // The search space is three times the max. number of items, in order not to keep searching forever assets that might not match the filters.
-
 // This might be defined in OKHub Expose, too.
 if (!defined('OKHUB_TAXONOMY')) define('OKHUB_TAXONOMY', 'okhub_taxonomy');
 

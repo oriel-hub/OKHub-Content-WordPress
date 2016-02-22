@@ -163,26 +163,31 @@ function populateSelectBoxes(dataset, category) {
   id_select_assets = dataset + '_' + category + '_assets';
   id_select_sources = dataset + '_' + category + '_source';
   id_select_mappings = dataset + '_' + category + '_mappings';
+  select_category_assets = $jqorig('#' + id_select_assets);
+  select_category_assets.empty();
+  select_category_sources = $jqorig('#' + id_select_sources);
+  select_category_sources.empty();
+  select_category_mappings = $jqorig('#' + id_select_mappings);
+  select_category_mappings.empty();
 
-  /* Populate the filter select boxes */
-    select_category_assets = $jqorig('#' + id_select_assets);
-    select_category_assets.empty();
-    $jqorig.each(okhub_array_categories[dataset][category], function(i, cat) {
+  dataset_category_array = okhub_array_categories[dataset][category];
+  if (dataset_category_array != null) {
+    /* Populate the filter select boxes */
+    $jqorig.each(dataset_category_array, function(i, cat) {
       select_category_assets.append($jqorig("<option></option>").attr("value", cat[0]).text(cat[1]));
     });
     /* Mark previously selected categories */
     select_category_assets.val(selected_categories[dataset][category]);
-
     /* Populate mapping sources select boxes */
-    select_category_sources = $jqorig('#' + id_select_sources);
-    select_category_sources.empty();
     $jqorig.each(okhub_array_categories[dataset][category], function(i, cat) {
       select_category_sources.append($jqorig("<option></option>").attr("value", cat[0]).text(cat[1]));
     });
-  /* Populate previously selected mappings */
-    select_category_mappings = $jqorig('#' + id_select_mappings);
-    select_category_mappings.empty();
-    $jqorig.each(selected_categories_mappings[dataset][category], function(okhub_category, mapped_categories) {
+  }
+
+  dataset_selected_mappings_array = selected_categories_mappings[dataset][category];
+  if (dataset_selected_mappings_array != null) {
+    /* Populate previously selected mappings */
+    $jqorig.each(dataset_selected_mappings_array, function(okhub_category, mapped_categories) {
       $jqorig.each(mapped_categories, function(i, wp_category) {
         tax = wp_category.split('-');
         tax_name = tax[0];
@@ -194,32 +199,25 @@ function populateSelectBoxes(dataset, category) {
         select_category_mappings.append($jqorig("<option></option>").attr("value", okhub_category + "," + wp_category).text(title));
       });
     });
+  }
 }
 
 function selectAll(id_cat_field) {
   var id_select = "#" + id_cat_field;
   $jqorig(id_select + ' option').prop('selected', true);
-  $jqchosen(id_select).trigger("chosen:updated");
+  $jqorig(id_select).trigger("chosen:updated");
 }
 
 function deselectAll(id_cat_field) {
   var id_select = "#" + id_cat_field;
   $jqorig(id_select).val([]);
-  $jqchosen(id_select).trigger("chosen:updated");
+  $jqorig(id_select).trigger("chosen:updated");
 }
 
 function removeAll(id_cat_field) {
   var id_select = "#" + id_cat_field;
   $jqorig(id_select).empty();
-  $jqchosen(id_select).trigger("chosen:updated");
-}
-
-function expandTree(tree) {
-  $jqtree(tree).jqxTree('expandAll');
-}
-
-function collapseTree(tree) {
-  $jqtree(tree).jqxTree('collapseAll');
+  $jqorig(id_select).trigger("chosen:updated");
 }
 
 function selectAllMappings() {
@@ -251,18 +249,26 @@ function updateDefaultUser() {
   default_user = $jqorig("#okhub_user").val();
 }
 
-function updateSelectBoxes(dataset, category) {
+function loadTaxonomies(dataset, category, refresh) {
+  updateSelectBoxes(dataset, category, refresh);
+  select_assets = '#' + dataset + '_' + category + '_assets';
+  $jqorig(select_assets).trigger('chosen:open'); 
+}
+
+function updateSelectBoxes(dataset, category, refresh) {
+  $jqorig(".okhub-load-" + dataset + "-" + category).prop('disabled', true);
+  $jqorig(".okhub-refresh-" + dataset + "-" + category).prop('disabled', true);
   $jqorig.ajax({
     url: home_url,
     dataType: 'json',
-    data: {'okhub_javascript': 1, 'okhub_source': dataset, 'okhub_category': category}
+    data: {'okhub_javascript': 1, 'okhub_source': dataset, 'okhub_category': category, 'okhub_refresh': refresh}
   })
   .done(function(result) {
     okhub_array_categories[dataset][category] = result;
     populateSelectBoxes(dataset, category);
-    // Hide button
-    load_class = ".okhub-load-" + dataset + "-" + category;
-    $jqorig(load_class).hide();
+    // Hide/show load/refresh buttons
+    $jqorig(".okhub-load-" + dataset + "-" + category).hide();
+    $jqorig(".okhub-refresh-" + dataset + "-" + category).show();
     select_assets = '#' + dataset + '_' + category + '_assets';
     select_sources = '#' + dataset + '_' + category + '_source';
     select_mappings = '#' + dataset + '_' + category + '_mappings';
@@ -273,11 +279,12 @@ function updateSelectBoxes(dataset, category) {
     $jqorig(select_assets).trigger("chosen:updated");
     $jqorig(select_sources).trigger("chosen:updated");
     $jqorig(select_mappings).trigger("chosen:updated");
-    $jqorig(select_assets).trigger('chosen:open');
   })
   .fail(function( jqXHR, textStatus ) {
-    alert("Request failed. Error: " + textStatus + ". Output: " + JSON.stringify(jqXHR));
+    alert("Request failed while retrieving " + dataset + " " + category + ". Error: " + textStatus + ". Output: " + JSON.stringify(jqXHR));
   })
+  $jqorig(".okhub-load-" + dataset + "-" + category).prop('disabled', false);
+  $jqorig(".okhub-refresh-" + dataset + "-" + category).prop('disabled', false);
 }
 
 function initSelectedBoxes() {
@@ -298,7 +305,7 @@ function loadAdminPage() {
     '.chosen-select-width'     : {width:"95%"}
   }
   for (var selector in config) {
-    $jqchosen(selector).chosen(config[selector]);
+    $jqorig(selector).chosen(config[selector]);
   }
   hideTabs();
   if (okhub_plugin == 'okhub_expose') {
@@ -308,6 +315,7 @@ function loadAdminPage() {
   else {
     initDatasets();
     $jqorig('.okhub-mapping-target').hide();
+    $jqorig('.okhub-refresh-buttons').hide();
     $jqorig('.okhub-mapping-target').trigger("chosen:updated");
     initCategoriesArrays();
     initSelectedBoxes();

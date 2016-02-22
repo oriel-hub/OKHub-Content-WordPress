@@ -36,6 +36,7 @@ if (!defined('OKHUB_API_LIBRARY_DIR')) {
   }
   else {
     wp_die(__('OKHub Content: The PHP OKHub Wrapper was not found. Please download it from https://github.com/okhub-API/PHP-wrapper/archive/master.zip'));
+    deactivate_plugins(plugin_basename( __FILE__ ));
   }
 }
 if (file_exists(OKHUB_API_LIBRARY_DIR) && is_readable(OKHUB_API_LIBRARY_DIR)) {
@@ -89,10 +90,9 @@ add_filter('get_previous_post_where', 'okhub_adjacent_post_where');
 add_filter('get_previous_post_join', 'okhub_adjacent_post_join');
 add_filter('get_next_post_where', 'okhub_adjacent_post_where');
 add_filter('get_next_post_join', 'okhub_adjacent_post_join');
-add_action('template_redirect', 'okhub_javscript_trigger');
+add_action('template_redirect', 'okhub_javascript_trigger');
 add_filter('single_template', 'okhub_single_templates');
 add_filter('content_template', 'okhub_content_templates');
-
 
 //--------------------------- Set-up / init functions ----------------------------
 
@@ -122,9 +122,9 @@ function okhub_init() {
 // Clean up on deactivation
 function okhub_deactivate() {
   $okhubapi = new OkhubApiWrapper;
+  $okhubapi->cacheFlush();
   okhub_delete_plugin_options();
   okhub_unschedule_imports();
-  $okhubapi->cacheFlush();
   flush_rewrite_rules();
 }
 
@@ -146,8 +146,8 @@ function okhub_admin_init(){
     okhub_delete_plugin_options();
   }
   okhub_edit_post_form();
-  register_deactivation_hook(dirname(__FILE__), 'okhub_deactivate');
-  register_uninstall_hook(dirname(__FILE__), 'okhub_uninstall');
+  register_deactivation_hook(__FILE__, 'okhub_deactivate');
+  register_uninstall_hook(__FILE__, 'okhub_uninstall');
 }
 
 // Register OKHub Widget
