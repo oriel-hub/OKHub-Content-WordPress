@@ -249,7 +249,7 @@ function okhub_get_api_value($object, $field_name, $dataset='', $language='', $r
         $value = $api_value;
       }
       if (is_array($value) && $return_single)  {
-        $value = current($api_value); // returns FALSE if the array is empty.
+        $value = current($value); // returns FALSE if the array is empty.
         if (is_array($value) && count($value) == 1 && isset($value[0]) && is_scalar($value[0])) {
           $value = $value[0];
         }

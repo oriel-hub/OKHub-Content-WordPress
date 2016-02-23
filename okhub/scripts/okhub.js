@@ -281,7 +281,7 @@ function updateSelectBoxes(dataset, category, refresh) {
     $jqorig(select_mappings).trigger("chosen:updated");
   })
   .fail(function( jqXHR, textStatus ) {
-    alert("Request failed while retrieving " + dataset + " " + category + ". Error: " + textStatus + ". Output: " + JSON.stringify(jqXHR));
+    // alert("Request failed while retrieving " + dataset + " " + category + ". Error: " + textStatus + ". Output: " + JSON.stringify(jqXHR));
   })
   $jqorig(".okhub-load-" + dataset + "-" + category).prop('disabled', false);
   $jqorig(".okhub-refresh-" + dataset + "-" + category).prop('disabled', false);
