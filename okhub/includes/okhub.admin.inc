@@ -29,7 +29,7 @@ function okhub_datasets_names($force_update=FALSE) {
       $sources = $response->getResults();
       foreach ($sources as $source) {
         $code = okhub_get_api_value($source, OKHUB_API_FN_SOURCE_CODE, OKHUB_OKHUB_SOURCE_CODE);
-        $name = current(current(okhub_get_api_value($source, OKHUB_API_FN_SOURCE_NAME, OKHUB_OKHUB_SOURCE_CODE))); // Language ignored.
+        $name = okhub_get_api_value($source, OKHUB_API_FN_SOURCE_NAME, OKHUB_OKHUB_SOURCE_CODE);
         if ($code && $name) {
           $okhub_datasets[$code] = $name;
         }
@@ -168,8 +168,9 @@ function okhub_get_post_sources($post_id) {
 function okhub_get_hub_relitems_field($object, $field_name, $dataset='hub', $rel_field) {
   // For some reason the API is returning always an array with one element, which is an array with one element indexed by the lower-case name of the rel. item type.
   $items_ids = array();
-  if (($rel_items = okhub_get_api_value($object, $field_name, $dataset, $language='', TRUE)) && ($rel_items_api = current(current($rel_items)))) {
-    if (is_array($rel_items_api)) {
+  $rel_items_api = okhub_get_api_value($object, $field_name, $dataset);
+  if (($rel_items = okhub_get_api_value($object, $field_name, $dataset)) && is_array($rel_items) && ($rel_items_api = current($rel_items))) {    
+    if (is_array($rel_items_api)) {     
       if (is_numeric(key($rel_items_api))) {
         foreach ($rel_items_api as $rel_item) {
           if (isset($rel_item[$rel_field])) {
@@ -325,12 +326,12 @@ function okhub_admin_main() {
   }
   $okhub_setup_done = okhubapi_variable_get('okhub', 'setup_done', FALSE);
   if ($okhub_setup_done) {
-    $importer_url = 'import.php?import=okhub_importer';
-    $message = __("You can change the plugin configuration options below or proceed to the <input type=\"button\" class=\"button-primary\" value=\"manual import page\" onclick=\"window.location='$importer_url';\">");
-    okhub_show_message($message);
     okhub_after_config();
   }
   okhub_render_form();
+  $importer_url = 'import.php?import=okhub_importer';
+  $message = '<div class="okhub_message">You can change the plugin configuration options above or proceed to the <input type="button" class="button-primary" value="manual import page" onclick="window.location=\''.$importer_url.'\';"></div>';
+  okhub_show_message($message);
 }
 
 // Display registered error messages

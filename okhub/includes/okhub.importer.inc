@@ -78,25 +78,26 @@ class OkhubImporter extends WP_Importer {
       $exclude = FALSE;
       $dataset_acronym = okhub_get_dataset_acronym($dataset);
       foreach ($results_dataset as $type => $results) {
+        $type_name = okhub_get_type_name($type, TRUE);
         $exclude = !okhub_has_content($dataset, $type);
         if (!$exclude) {
           if ($results['new']) {
             $total += $results['new'];
-            $output = __('Created ') . $results['new'] . ' ' . $dataset_acronym . ' ' . __($type);
+            $output = __('Created ') . $results['new'] . ' ' . $dataset_acronym . ' ' . __($type_name);
             echo okhub_div_field_wrapper('okhub-results-import', '', '', $output);
           }
           if ($results['updated']) {
             $total += $results['updated'];
-            $output = __('Updated ') . $results['updated'] . ' ' . $dataset_acronym . ' ' . __($type);
+            $output = __('Updated ') . $results['updated'] . ' ' . $dataset_acronym . ' ' . __($type_name);
             echo okhub_div_field_wrapper('okhub-results-import', '', '', $output);
           }
           if (isset($results['skipped']) && $results['skipped']) {
-            $output = __('Skipped ') . $results['skipped'] . ' ' . $dataset_acronym . ' ' . __($type);
+            $output = __('Skipped ') . $results['skipped'] . ' ' . $dataset_acronym . ' ' . __($type_name);
             echo okhub_div_field_wrapper('okhub-results-import', '', '', $output);
           }
         }
         if (!$total && !$exclude) {
-          $output = __('Nothing imported from ') . $dataset_acronym;
+          $output = __('No '. $type_name .' imported from ') . $dataset_acronym;
           echo okhub_div_field_wrapper('okhub-results-import', '', '', $output);
         }
       }
@@ -121,9 +122,9 @@ class OkhubImporter extends WP_Importer {
         foreach ($okhub_categories as $category) {
           $parameter_name = 'okhub_import_' . $category;
           if (!empty($_POST[$parameter_name])) {
-            $this->import_categories($dataset, $category, $force_update);
-            $okhub_import_dates[$dataset][$category] = $date;
-            $okhub_import_results[$dataset][$category] = $this->terms[$dataset][$category];
+            $this->import_categories($dataset, $category);
+            @$okhub_import_dates[$dataset][$category] = $date;
+            @$okhub_import_results[$dataset][$category] = $this->terms[$dataset][$category];
           }
         }
       }
@@ -132,8 +133,8 @@ class OkhubImporter extends WP_Importer {
         $parameter_name = 'okhub_import_' . $asset;
         if (!empty($_POST[$parameter_name])) {
           $this->import_assets($dataset, $asset, $force_update);
-          $okhub_import_dates[$dataset][$asset] = $date;
-          $okhub_import_results[$dataset][$asset] = $this->terms[$dataset][$asset];
+          @$okhub_import_dates[$dataset][$asset] = $date;
+          @$okhub_import_results[$dataset][$asset] = $this->terms[$dataset][$asset];
         }
       }
     }
@@ -142,7 +143,8 @@ class OkhubImporter extends WP_Importer {
   }
 
   // Import assets.
-  function import_assets($dataset, $type, $force_update) {
+  function import_assets($dataset, $type, $force_update=FALSE) {
+    $type_name = okhub_get_type_name($type, TRUE);
     $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
     $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes', array_keys(okhub_languages())); 
     $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
@@ -155,7 +157,7 @@ class OkhubImporter extends WP_Importer {
           if (post_type_exists($post_type)) {
             if (is_admin() && OKHUB_VERBOSE_IMPORT) {
               $dataset_acronym = okhub_get_dataset_acronym($dataset);
-              $output = __('Importing') . " $dataset_acronym " . __($type) . '...';
+              $output = __('Importing') . " $dataset_acronym " . __($type_name) . '...';
               echo okhub_div_field_wrapper('okhub-title-output-importer', '', '', $output);
             }
             foreach ($assets as $asset) {
@@ -245,10 +247,11 @@ class OkhubImporter extends WP_Importer {
   }
 
   // Import categories.
-  function import_categories($dataset, $type, $force_update) {
-  $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
-  $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes',  array_keys(okhub_languages())); 
-  $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
+  function import_categories($dataset, $type) {
+    $type_name = okhub_get_type_name($type, TRUE);
+    $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
+    $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes',  array_keys(okhub_languages())); 
+    $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
     if (okhub_has_content($dataset, $type)) {
       $this->terms[$dataset][$type] = array('new' => 0, 'updated' => 0);
       if ($categories = $this->retrieve_content($dataset, $type)) {
@@ -257,7 +260,7 @@ class OkhubImporter extends WP_Importer {
           if (taxonomy_exists($taxonomy_name)) {
             $dataset_acronym = okhub_get_dataset_acronym($dataset);
             if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-              $output = __('Importing') . " $dataset_acronym " . __($type) . '...';
+              $output = __('Importing') . " $dataset_acronym " . __($type_name) . '...';
               echo okhub_div_field_wrapper('okhub-title-output-importer', '', '', $output);
             }
             foreach ($categories as $category) {

@@ -132,8 +132,8 @@ function okhub_general_page() {
 // Importer main page
 function okhub_importer_form() {
   $okhubapi = new OkhubApiWrapper;
-  $okhub_datasets = okhub_datasets();
   $okhub_datasets_names = okhub_datasets_names();
+  $okhub_datasets = okhub_datasets();
   $okhub_categories = okhub_categories();
   $okhub_new_categories = okhubapi_variable_get('okhub', 'import_new_categories', OKHUB_NEW_CATEGORIES);
   $selected_datasets = okhubapi_variable_get('okhub', 'selected_datasets', array());
@@ -276,6 +276,9 @@ function okhub_render_form() {
   $okhub_assets = okhub_assets();
   $okhub_categories = okhub_categories();
   $okhub_datasets_names = okhub_datasets_names();
+  if (empty($okhub_datasets_names)) {
+    $okhub_datasets_names = okhub_datasets_names(TRUE); // force update
+  }
   $okhub_datasets = okhub_datasets_with_content();
   $selected_datasets = okhub_selected_datasets();
   $okhub_datasets_names = okhub_datasets_names_with_content();
@@ -288,14 +291,14 @@ function okhub_render_form() {
 		<!-- Display Plugin Icon, Header, and Description -->
 		<div class="icon32" id="icon-options-general"></div>
 		<h2><?php _e('OKHub Content - Settings'); ?></h2>
-		<p>
+		<div class="updated">
       <?php printf(__('This plugin provides access to content published and/or curated by OKHub partner organisations via the Open Knowledge Hub API (<a href="%s" target="_new">%s</a>).'), OKHUB_API_HOME_URL, OKHUB_API_HOME_URL); ?>
       <br />
       <br />
       <i><?php _e('Please look through all the tabs on this page to set your configuration options. Changes will only be effective after submitting them by clicking on the "Save changes" button.</i>'); ?>
       <br />
       <i><?php printf(__('Nothing will be imported until periodic imports are set or a manual import is done.')); ?></i>
-    </p>
+    </div>
 
     <!-- Beginning of the Plugin Options Form -->
 		<form method="post" id="okhub_import_form" action="options.php" onSubmit="selectAllMappings()">
@@ -354,7 +357,7 @@ function okhub_render_form() {
           <th scope="row"><?php _e('Sources to import from'); ?></th>
           <td>
             <?php echo okhub_select_box('okhub_options[selected_datasets][]', 'okhub_selected_datasets', $okhub_datasets_names, $selected_datasets, array('multiple' => 'multiple', 'class' => 'chosen-select', 'data-placeholder' => 'Select sources...', 'style' => 'width: 350px', 'onchange' => 'changeDataset()')); ?>
-            <a href="javascript:deselectAll('okhub_selected_datasets');"><?php _e('Deselect all'); ?></a>
+            <a href="javascript:deselectAll('okhub_selected_datasets');"><?php _e('Deselect all'); ?></a> 
           </td>
         </tr>
 
@@ -825,7 +828,7 @@ function okhub_render_form() {
     </div>	<!-- UI tabs -->	
 
       <p class="okhub-button submit">
-        <input name="okhub_options[submit_save]" type="submit" class="button-primary" value="<?php _e('Save changes') ?>"/>
+        <input name="okhub_options[submit_save]" type="submit" class="button-primary" value="<?php _e('Save changes') ?>" onClick="hideImportMessage()"/>
       </p>
 
     <?php } else { // If API key is not validated ?>
