@@ -70,7 +70,8 @@ if (!defined('OKHUB_API_FN_KEYWORDS')) define('OKHUB_API_FN_KEYWORDS', 'keyword'
 if (!defined('OKHUB_API_FN_LANGUAGE_NAME')) define('OKHUB_API_FN_LANGUAGE_NAME', 'language_name'); // This is available for Eldis/BRIDGE. The hub_metadata_languages fields should be used instead for all sources (now it's broken in the API).
 if (!defined('OKHUB_API_FN_LEVEL')) define('OKHUB_API_FN_LEVEL', 'level');
 if (!defined('OKHUB_API_FN_LICENCE_TYPE')) define('OKHUB_API_FN_LICENCE_TYPE', 'licence_type');
-if (!defined('OKHUB_API_FN_LOCATION_COUNTRY')) define('OKHUB_API_FN_LOCATION_COUNTRY', 'location_country');
+if (!defined('OKHUB_API_FN_LOCATION_COUNTRY')) define('OKHUB_API_FN_LOCATION_COUNTRY', 'country');
+if (!defined('OKHUB_API_FN_NAME')) define('OKHUB_API_FN_NAME', 'name');
 if (!defined('OKHUB_API_FN_OBJECT_ID')) define('OKHUB_API_FN_OBJECT_ID', 'object_id'); // Source's object ids like Eldis' of BRIDGE's.
 if (!defined('OKHUB_API_FN_OBJECT_NAME')) define('OKHUB_API_FN_OBJECT_NAME', 'object_name');
 if (!defined('OKHUB_API_FN_ORGANISATION_TYPE')) define('OKHUB_API_FN_ORGANISATION_TYPE', 'organisation_type');

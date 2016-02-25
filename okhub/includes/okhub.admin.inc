@@ -117,12 +117,12 @@ function okhub_content_sources($force_update = FALSE) {
   return $content_sources;
 }
 
-function okhub_datasets_with_content() {
-  return array_keys(okhub_content_sources());
+function okhub_datasets_with_content($force_update=FALSE) {
+  return array_keys(okhub_content_sources($force_update));
 }
 
-function okhub_has_content($dataset, $type='') {
-  $content_sources = okhub_content_sources();
+function okhub_has_content($dataset, $type='', $force_update=FALSE) {
+  $content_sources = okhub_content_sources($force_update);
   if ($type) {
     return !empty($content_sources[$dataset][$type]);
   }
@@ -268,8 +268,16 @@ function okhub_get_dataset_acronym($dataset) {
   return ucfirst($dataset);
 }
 
-function okhub_get_translatable_fields() {
-  return array_unique(array_map('trim', explode(',', OKHUB_REQUIRED_TRANSLATABLE_FIELDS . ',' . OKHUB_ADDITIONAL_TRANSLATABLE_FIELDS)));
+function okhub_get_translatable_fields($post_type) {
+  switch ($post_type) {
+    case 'okhub_documents':
+      $additional_fields = OKHUB_ADDITIONAL_TRANSLATABLE_FIELDS_DOCUMENTS;
+      break;
+    case 'okhub_organisations':
+      $additional_fields = OKHUB_ADDITIONAL_TRANSLATABLE_FIELDS_ORGANISATIONS;
+      break;
+  }
+  return array_unique(array_map('trim', explode(',', OKHUB_REQUIRED_TRANSLATABLE_FIELDS . ',' . $additional_fields)));
 }
 
 function okhub_has_language_content($asset, $dataset, $okhub_language_filters_codes) {
@@ -337,7 +345,7 @@ function okhub_admin_main() {
 // Display registered error messages
 function okhub_admin_notices() {
   settings_errors('okhub_options', FALSE, TRUE);
-  //okhubapi_report_errors();
+  okhubapi_report_errors();
 }
 
 // Run plugin initialization tasks after configuration.
@@ -355,7 +363,6 @@ function okhub_after_config() {
   if ($user_info = get_userdata($user_id)) {
     okhubapi_variable_set('okhub', 'import_user', $user_info->user_login);
   }
-  //okhubapi_report_errors();
 }
 
 // Create new user (author of imported content)
@@ -394,7 +401,6 @@ function okhub_clear_cache() {
 
 // Validate input and the API key.
 function okhub_validate_options($input) {
-  $okhub_datasets = okhub_datasets();
   $okhubapi = new OkhubApiWrapper;
   $error = FALSE;
   $error_message = '';
@@ -437,6 +443,9 @@ function okhub_validate_options($input) {
         $input['num_items'] = OKHUB_API_NUM_ITEMS;
       }
     }
+    else {
+      $input['num_items'] = OKHUB_API_NUM_ITEMS;
+    }
     if (isset($input['excerpt_length'])) {
       if (!is_numeric($input['excerpt_length'])) {
         $error = TRUE;
@@ -444,23 +453,38 @@ function okhub_validate_options($input) {
         $input['excerpt_length'] = 0;
       }
     }
+    else {
+      $input['excerpt_length'] = 0;
+    }
     if (isset($input['exclude_uris'])) {
       $input['exclude_uris'] = wp_kses($input['exclude_uris'], $allowed_html);
+    }
+    else {
+      $input['exclude_uris'] = '';
     }
     if (isset($input['import_authors_assets'])) {
       $input['import_authors_assets'] = wp_kses($input['import_authors_assets'], $allowed_html);
     }
+    else {
+      $input['import_authors_assets'] = '';
+    }
     if (isset($input['import_publishers_assets'])) {
       $input['import_publishers_assets'] = wp_kses($input['import_publishers_assets'], $allowed_html);
+    }
+    else {
+      $input['import_publishers_assets'] = '';
     }
     if (isset($input['import_query'])) {
       $input['import_query'] = wp_kses($input['import_query'], $allowed_html);
     }
+    else {
+      $input['import_query'] = '';
+    }
     if (isset($input['import_user'])) {
       $input['import_user'] =  sanitize_user($input['import_user'], TRUE);
     }
-    foreach ($okhub_datasets as $dataset) {
-      $dataset_acronym = okhub_get_dataset_acronym($dataset);
+    else {
+      $input['import_user'] = OKHUB_IMPORT_USER;
     }
   }
   else {

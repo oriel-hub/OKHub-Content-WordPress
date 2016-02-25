@@ -36,10 +36,10 @@ class OkhubImporter extends WP_Importer {
 			case 1:
         check_admin_referer('okhub_import', 'okhub_import_check_referrer');
         $importer_url = admin_url() . 'admin.php?import=okhub_importer';
-        printf(__('<br/>Go back to the <a href="%s">OKHub Importer</a>.'), $importer_url);
+        printf('<div class="okhub-title-output-importer">' . __('Go back to the <a href="%s">OKHub Importer</a>') . '</div>', $importer_url);
         $this->import();
         $this->display_results();
-        //okhubapi_report_errors();
+        okhubapi_report_errors();
 				break;
 		}
 		$this->footer();
@@ -84,21 +84,21 @@ class OkhubImporter extends WP_Importer {
           if ($results['new']) {
             $total += $results['new'];
             $output = __('Created ') . $results['new'] . ' ' . $dataset_acronym . ' ' . __($type_name);
-            echo okhub_div_field_wrapper('okhub-results-import', '', '', $output);
+            echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
           }
           if ($results['updated']) {
             $total += $results['updated'];
             $output = __('Updated ') . $results['updated'] . ' ' . $dataset_acronym . ' ' . __($type_name);
-            echo okhub_div_field_wrapper('okhub-results-import', '', '', $output);
+            echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
           }
           if (isset($results['skipped']) && $results['skipped']) {
             $output = __('Skipped ') . $results['skipped'] . ' ' . $dataset_acronym . ' ' . __($type_name);
-            echo okhub_div_field_wrapper('okhub-results-import', '', '', $output);
+            echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
           }
         }
         if (!$total && !$exclude) {
-          $output = __('No '. $type_name .' imported from ') . $dataset_acronym;
-          echo okhub_div_field_wrapper('okhub-results-import', '', '', $output);
+          $output = __('No '). strtolower($type_name) . __(' imported from ') . $dataset_acronym;
+          echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
         }
       }
     }
@@ -145,6 +145,7 @@ class OkhubImporter extends WP_Importer {
   // Import assets.
   function import_assets($dataset, $type, $force_update=FALSE) {
     $type_name = okhub_get_type_name($type, TRUE);
+    $dataset_acronym = okhub_get_dataset_acronym($dataset);
     $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
     $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes', array_keys(okhub_languages())); 
     $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
@@ -156,9 +157,9 @@ class OkhubImporter extends WP_Importer {
           $post_type = okhub_custom_type_name($type);
           if (post_type_exists($post_type)) {
             if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-              $dataset_acronym = okhub_get_dataset_acronym($dataset);
               $output = __('Importing') . " $dataset_acronym " . __($type_name) . '...';
-              echo okhub_div_field_wrapper('okhub-title-output-importer', '', '', $output);
+              echo okhub_div_field_wrapper('notice notice-success okhub-title-output-importer', '', '', $output);
+              echo '<ul>';
             }
             foreach ($assets as $asset) {
               $titles = okhub_api_value_languages($asset, OKHUB_API_FN_TITLE, $dataset, $preferred_languages);
@@ -188,7 +189,7 @@ class OkhubImporter extends WP_Importer {
                           $post_id = okhub_update_asset($post_id, $dataset, $post_type, $asset);
                           if ($post_id) {
                             if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                              $output = $title . ' - ' . __('updated');
+                              $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __('updated');
                               echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
                             }
                             $this->terms[$dataset][$type]['updated']++;
@@ -199,7 +200,7 @@ class OkhubImporter extends WP_Importer {
                           break;
                         case 'skip':
                           if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                            $output = $title . ' - ' . __('skipped (most recent version already imported)');
+                            $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __('skipped (most recent version already imported)');
                             echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
                           }
                           $this->terms[$dataset][$type]['skipped']++;
@@ -208,7 +209,7 @@ class OkhubImporter extends WP_Importer {
                     }
                     else { // There's content for this source and the version being imported is not more recent and it's currently published or pending. We always skip it in this case.
                       if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                        $output = $title . ' - ' . __('skipped (most recent version already imported)');
+                        $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __('skipped (most recent version already imported)');
                         echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
                       }
                       $this->terms[$dataset][$type]['skipped']++;
@@ -217,7 +218,7 @@ class OkhubImporter extends WP_Importer {
                   else { // The existing version is not published or pending - or there's no content for this source. We update it.
                     if ($post_id = okhub_update_asset($post_id, $dataset, $post_type, $asset)) {
                       if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                        $output = $title . ' - ' . __(' updated');
+                        $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __(' updated');
                         echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
                       }
                       $this->terms[$dataset][$type]['updated']++;
@@ -229,6 +230,10 @@ class OkhubImporter extends WP_Importer {
                 }
                 else { // The item does not exist. Create it.
                   if ($post_id = okhub_insert_asset($dataset, $post_type, $asset)) {
+                    if (is_admin() && OKHUB_VERBOSE_IMPORT) {
+                      $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __('new');
+                      echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
+                    }
                     $this->terms[$dataset][$type]['new']++ ;
                   }
                   else {
@@ -237,12 +242,17 @@ class OkhubImporter extends WP_Importer {
                 }
               }
             }
+            echo '</ul>';
           }
         }
         else {
           okhubapi_register_error('okhub', __('Sorry, we cannot find any content that matches your criteria. Please remove some filters or search more generally and try again.'), 'OkhubImporter::import_assets', 'notification', FALSE);
         }
       }
+    }
+    else {
+      $output = __('No ') . __(strtolower($type_name)) . ' found in the hub for the source "' .$dataset_acronym. '"';
+      echo okhub_div_field_wrapper('notice notice-warning okhub-title-output-importer', '', '', $output);
     }
   }
 
@@ -261,8 +271,9 @@ class OkhubImporter extends WP_Importer {
             $dataset_acronym = okhub_get_dataset_acronym($dataset);
             if (is_admin() && OKHUB_VERBOSE_IMPORT) {
               $output = __('Importing') . " $dataset_acronym " . __($type_name) . '...';
-              echo okhub_div_field_wrapper('okhub-title-output-importer', '', '', $output);
+              echo okhub_div_field_wrapper('notice notice-success okhub-title-output-importer', '', '', $output);
             }
+            echo '<ul>';
             foreach ($categories as $category) {
               $hub_id = okhub_get_api_value($category, OKHUB_API_FN_ITEM_ID);
               $category_names = okhub_get_category_names_language($category, $dataset, $preferred_languages);
@@ -271,7 +282,7 @@ class OkhubImporter extends WP_Importer {
                 if ($term_id = okhub_get_id_by_meta(OKHUB_TAXONOMY, OKHUB_WP_FN_HUB_ITEM_ID, $hub_id)) { // The taxonomy term exists.
                   // Update the term corresponding to the category.
                   if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                    $output = $category_name . ' - ' . __('updated');
+                    $output = '<li>' . $category_name . ' - ' . __('updated');
                     echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
                   }
                   if (okhub_update_category($term_id, $dataset, $taxonomy_name, $category)) {
@@ -284,7 +295,7 @@ class OkhubImporter extends WP_Importer {
                 else {
                   // Create a new term for the category.
                   if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                    $output = $category_name . ' - ' . __('new');
+                    $output = '<li>' . $category_name . ' - ' . __('new');
                     echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
                   }
                   $term_id = okhub_insert_category($dataset, $taxonomy_name, $category);
@@ -297,6 +308,7 @@ class OkhubImporter extends WP_Importer {
                 }
               }
             }
+            echo '</ul>';
           }
         }
         else {
@@ -413,7 +425,6 @@ class OkhubImporter extends WP_Importer {
       $age_results = 0;
       $start_offset = 0;
       $response = $okhubapi->search($type, OKHUB_HUB_SOURCE_CODE, $api_key, $format, $num_requested, $age_results, $start_offset, $filter_params);
-      //d($okhubapi);
       if ($response->isError()) {
         $error_message = __('No content retrieved by the API call. ') . $response->getErrorMessage();
         okhubapi_register_error('okhub', $error_message, 'OkhubImporter::retrieve_content', 'warning');
@@ -471,15 +482,14 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
     $post['post_author'] = $okhub_import_user_id;
   }
   // Publication date
-  if ($hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP) && ($okhub_pub_date == 'date_created')) { 
+  if (!$hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP)) {
+    $hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_INDEX_UPDATED);
+  }
+  if ($hub_timestamp && ($okhub_pub_date == 'date_created')) { 
     $post['post_date'] = date_i18n('Y-m-d H:i:s', strtotime($hub_timestamp));
   }
   if ($index_updated = okhub_get_api_value($asset, OKHUB_API_FN_INDEX_UPDATED) && ($okhub_pub_date == 'date_updated')) { 
     $post['post_date'] = date_i18n('Y-m-d H:i:s', strtotime($index_updated));
-  }
-  if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-    $output = $title . ' - ' . __('new');
-    echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
   }
   if ($post_id = wp_insert_post($post)) {
     // ---------- Hidden metadata - title, description, sources ----------
@@ -490,7 +500,7 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
     add_post_meta($post_id, OKHUB_WP_FN_HUB_ITEM_ID, okhub_get_api_value($asset, OKHUB_API_FN_ITEM_ID), TRUE);
     add_post_meta($post_id, OKHUB_WP_FN_HUB_METADATA_URL, okhub_get_api_value($asset, OKHUB_API_FN_METADATA_URL), TRUE);
     // We include the hub timestamp for each source to compare when importing.
-    add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_HUB_TIMESTAMP, $dataset), okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP), TRUE);
+    if ($hub_timestamp) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_HUB_TIMESTAMP, $dataset), $hub_timestamp, TRUE); }
     // ---------- Source's fields ----------
     if ($object_id = okhub_get_api_value($asset, OKHUB_API_FN_OBJECT_ID, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_OBJECT_ID, $dataset), $object_id, TRUE); }
     if ($website_url = okhub_get_api_value($asset, OKHUB_API_FN_WEBSITE_URL, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_WEBSITE_URL, $dataset), $website_url, TRUE); }
@@ -526,22 +536,6 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
       if ($publisher = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER, $dataset), $publisher, TRUE); }
       if ($publisher_country = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER_COUNTRY, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER_COUNTRY, $dataset), $publisher_country, TRUE); }
       if ($document_type = okhub_get_api_value($asset, OKHUB_API_FN_DOCUMENT_TYPE, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_DOCUMENT_TYPE, $dataset), $document_type, TRUE); }
-      // -- Add all languages versions for translatable fields (title/description) --
-      $translatable_fields = okhub_get_translatable_fields();
-      foreach ($accepted_languages as $lang_code) {
-        foreach ($translatable_fields as $field) {
-          $field_name = okhub_source_field_name($field, $dataset, $lang_code);
-          $field_value = okhub_get_api_value($asset, $field, $dataset, $lang_code);
-          if ($field_value) {
-            if (is_scalar($field_value)) {
-              add_post_meta($post_id, $field_name, $field_value, TRUE);
-            }
-            elseif (is_array($field_value)) {
-              okhub_add_post_array_meta($post_id, $field_name, $field_value);
-            }
-          }
-        }
-      }
     }
     // ----- Organisation-specific fields -----
     elseif ($post_type == 'okhub_organisations') {
@@ -551,6 +545,22 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
       if ($role = okhub_get_api_value($asset, OKHUB_API_FN_ORGANISATION_ROLE, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_ROLE, $dataset), $role, TRUE); }
       if ($organisation_url = okhub_get_api_value($asset, OKHUB_API_FN_ORGANISATION_URL, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_ORGANISATION_URL, $dataset), $organisation_url, TRUE); }
       if ($location_country = okhub_get_api_value($asset, OKHUB_API_FN_LOCATION_COUNTRY, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_LOCATION_COUNTRY, $dataset), $location_country, TRUE); }
+    }
+    // -- Add all languages versions for translatable fields (title/description) --
+    $translatable_fields = okhub_get_translatable_fields($post_type);
+    foreach ($accepted_languages as $lang_code) {
+      foreach ($translatable_fields as $field) {
+        $field_name = okhub_source_field_name($field, $dataset, $lang_code);
+        $field_value = okhub_get_api_value($asset, $field, $dataset, $lang_code);
+        if ($field_value) {
+          if (is_scalar($field_value)) {
+            add_post_meta($post_id, $field_name, $field_value, TRUE);
+          }
+          elseif (is_array($field_value)) {
+            okhub_add_post_array_meta($post_id, $field_name, $field_value);
+          }
+        }
+      }
     }
   }
   else {
@@ -597,7 +607,10 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
     $updated_post['post_author'] = $okhub_import_user_id;
   }
   // Publication date
-  if ($hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP) && ($okhub_pub_date == 'date_created')) { 
+  if (!$hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP)) {
+    $hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_INDEX_UPDATED);
+  }
+  if ($hub_timestamp && ($okhub_pub_date == 'date_created')) { 
     $updated_post['post_date'] = date_i18n('Y-m-d H:i:s', strtotime($hub_timestamp));
   }
   if ($index_updated = okhub_get_api_value($asset, OKHUB_API_FN_INDEX_UPDATED) && ($okhub_pub_date == 'date_updated')) { 
@@ -612,7 +625,7 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
     //update_post_meta($post_id, OKHUB_WP_FN_HUB_ITEM_ID, okhub_get_api_value($asset, OKHUB_API_FN_ITEM_ID));
     update_post_meta($post_id, OKHUB_WP_FN_HUB_METADATA_URL, okhub_get_api_value($asset, OKHUB_API_FN_METADATA_URL));
     // Timestamp for source.
-    update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_HUB_TIMESTAMP, $dataset), okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP));
+    if ($hub_timestamp) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_HUB_TIMESTAMP, $dataset), $hub_timestamp); }
     // ---------- Source's fields ----------
     if ($object_id = okhub_get_api_value($asset, OKHUB_API_FN_OBJECT_ID, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_OBJECT_ID, $dataset), $object_id); }
     if ($website_url = okhub_get_api_value($asset, OKHUB_API_FN_WEBSITE_URL, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_WEBSITE_URL, $dataset), $website_url); }
@@ -646,31 +659,31 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
       if ($publisher = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER, $dataset), $publisher); }
       if ($publisher_country = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER_COUNTRY, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER_COUNTRY, $dataset), $publisher_country); }
       if ($document_type = okhub_get_api_value($asset, OKHUB_API_FN_DOCUMENT_TYPE, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_DOCUMENT_TYPE, $dataset), $document_type); }
-      // -- Add all languages versions for translatable fields (title/description) --
-      $translatable_fields = okhub_get_translatable_fields();
-      foreach ($accepted_languages as $lang_code) {
-        foreach ($translatable_fields as $field) {
-          $field_name = okhub_source_field_name($field, $dataset, $lang_code);
-          $field_value = okhub_get_api_value($asset, $field, $dataset, $lang_code);
-          if ($field_value) {
-            if (is_scalar($field_value)) {
-              update_post_meta($post_id, $field_name, $field_value);
-            }
-            elseif (is_array($field_value)) {
-              okhub_update_post_array_meta($post_id, $field_name, $field_value);
-            }
-          }
-        }
-      }
     }
     // ----- Organisation-specific fields -----
     elseif ($post_type == 'okhub_organisations') {
       if ($acronym = okhub_get_api_value($asset, OKHUB_API_FN_ACRONYM, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_ACRONYM, $dataset), $acronym); }
       if ($alternative_acronym = okhub_get_api_value($asset, OKHUB_API_FN_ALTERNATIVE_ACRONYM, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_ALTERNATIVE_ACRONYM, $dataset), $alternative_acronym); }
       if ($organisation_type = okhub_get_api_value($asset, OKHUB_API_FN_ORGANISATION_TYPE, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_ORGANISATION_TYPE, $dataset), $organisation_type); }
-      if ($role = okhub_get_api_value($asset, OKHUB_API_FN_ORGANISATION_ROLE, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_ROLE, $dataset), $role, TRUE); }
+      if ($role = okhub_get_api_value($asset, OKHUB_API_FN_ORGANISATION_ROLE, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_ROLE, $dataset), $role); }
       if ($organisation_url = okhub_get_api_value($asset, OKHUB_API_FN_ORGANISATION_URL, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_ORGANISATION_URL, $dataset), $organisation_url); }
       if ($location_country = okhub_get_api_value($asset, OKHUB_API_FN_LOCATION_COUNTRY, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_LOCATION_COUNTRY, $dataset), $location_country); }
+    }
+    // -- Add all languages versions for translatable fields --
+    $translatable_fields = okhub_get_translatable_fields($post_type);
+    foreach ($accepted_languages as $lang_code) {
+      foreach ($translatable_fields as $field) {
+        $field_name = okhub_source_field_name($field, $dataset, $lang_code);
+        $field_value = okhub_get_api_value($asset, $field, $dataset, $lang_code);
+        if ($field_value) {
+          if (is_scalar($field_value)) {
+            update_post_meta($post_id, $field_name, $field_value);
+          }
+          elseif (is_array($field_value)) {
+            okhub_update_post_array_meta($post_id, $field_name, $field_value);
+          }
+        }
+      }
     }
   }
   else {

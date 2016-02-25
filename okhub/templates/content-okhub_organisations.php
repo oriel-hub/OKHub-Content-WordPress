@@ -39,6 +39,7 @@
             <!-- The function okhub_field is used to retrieve the fields values:
                   okhub_field($field_name, $source='', $language='', $before='', $after='', $format='', $separator=', '); -->
             <ul>
+              <?php okhub_field(OKHUB_WP_FN_NAME, $source_code, '', '<li class="okhub-field">' . __('Name: '), '</li>'); ?>
               <?php okhub_field(OKHUB_WP_FN_ACRONYM, $source_code, '', '<li class="okhub-field">' . __('Acronym: '), '</li>'); ?>
               <?php okhub_field(OKHUB_WP_FN_ORGANISATION_URL, $source_code, '', '<li class="okhub-field">' . __('Organisation URL: '), '</li>', 'link'); ?>
               <?php okhub_field(OKHUB_WP_FN_ORGANISATION_TYPE, $source_code, '', '<li class="okhub-field">' . __('Organisation type: '), '</li>'); ?>

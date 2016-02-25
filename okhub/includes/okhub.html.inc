@@ -26,6 +26,7 @@ function okhub_field($field_name, $source='', $language='', $before='', $after='
 // Returns a string with the value (or values) of a field based on its name (joined by the separator).
 function okhub_get_field($field_name, $source='', $language='', $format='', $separator=', ') {
   global $post;
+  $fields = '';
   if ($source) {
     $field_name = $source . '_' . $field_name;
   }
@@ -46,11 +47,13 @@ function okhub_get_field($field_name, $source='', $language='', $format='', $sep
   if (is_array($fields)) {
     $array_fields=array();
     foreach ($fields as $field) {
-      $array_fields[] = okhub_format_field($field, $format);
+      if ($field) {
+        $array_fields[] = okhub_format_field($field, $format);
+      }
     }
     $fields = implode($separator, $array_fields);
   }
-  else {
+  elseif ($fields) {
     $fields = okhub_format_field($fields, $format);
   }
   return $fields;

@@ -37,10 +37,11 @@ define('OKHUB_WP_FN_LANGUAGE_NAME', 'language_name');
 // Organisation
 define('OKHUB_WP_FN_ACRONYM', 'acronym');
 define('OKHUB_WP_FN_ALTERNATIVE_ACRONYM', 'alternative_acronym');
+define('OKHUB_WP_FN_NAME', 'name');
 define('OKHUB_WP_FN_ORGANISATION_TYPE', 'organisation_type');
 define('OKHUB_WP_FN_ORGANISATION_URL', 'organisation_url');
 define('OKHUB_WP_FN_ROLE', 'role');
-define('OKHUB_WP_FN_LOCATION_COUNTRY', 'location_country');
+define('OKHUB_WP_FN_LOCATION_COUNTRY', 'country');
 // Country
 define('OKHUB_WP_FN_ALTERNATIVE_NAME', 'alternative_name');
 define('OKHUB_WP_FN_ISO_NUMBER', 'iso_number');
@@ -73,7 +74,8 @@ define('OKHUB_IMPORT_RECURRENCE_ASSETS', 'daily');
 define('OKHUB_IMPORT_RECURRENCE_CATEGORIES', 'monthly');
 define('OKHUB_USER_EMAIL','okhub@ids.ac.uk');
 define('OKHUB_REQUIRED_TRANSLATABLE_FIELDS', 'title,description'); // To be added to admin interface.
-define('OKHUB_ADDITIONAL_TRANSLATABLE_FIELDS', 'publisher_country'); // Used to import content in alternative languages. Translatable fields could be retrieved from the hub.
+define('OKHUB_ADDITIONAL_TRANSLATABLE_FIELDS_DOCUMENTS', 'publisher_country');
+define('OKHUB_ADDITIONAL_TRANSLATABLE_FIELDS_ORGANISATIONS', 'name');
 define('OKHUB_UPDATED_ASSETS', 'overwrite');
 define('OKHUB_NEW_CATEGORIES', TRUE);
 //define('OKHUB_MAP_CATEGORIES', FALSE);
