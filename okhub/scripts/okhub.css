@@ -247,17 +247,6 @@ li.cat-item  p  a{
   padding-left: 25px;
 }
 
-/* Widget */
-
-.okhub-widget-list {
-  font-size: small;
-}
-
-.okhub-widget-item {
-  margin-top: 3px;
-  list-style: disc;
-}
-
 /* Notifications and error messages */
 
 .okhub-notification {
@@ -290,3 +279,101 @@ li.cat-item  p  a{
 .inline-edit-okhub_organisations .inline-edit-categories {
   display: none;
 }
+
+/* Widget */
+
+.okhub-widget-list {
+  font-size: small;
+}
+
+.okhub-widget-item {
+  margin-top: 3px;
+  list-style: disc;
+}
+
+#okhub_widget_dialog {
+  min-height: 550px;
+}
+
+.okhub-popup, .bMulti {
+  background-color: #FFF;
+  border-radius: 10px 10px 10px 10px;
+  box-shadow: 0 0 25px 5px #999;
+  color: #111;
+  display: none;
+  min-width: 600px;
+  padding: 25px;
+  height: 550px;
+}
+
+.okhub-popup-content {
+  height: 500px;
+  overflow-y: auto;  
+}
+
+.button.b-close, .button.bClose {
+  border-radius: 7px 7px 7px 7px;
+  box-shadow: none;
+  font: bold 131% sans-serif;
+  padding: 0 6px 2px;
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  background-color: #2b91af;
+  border-radius: 10px;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  padding: 5px 8px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.lt-ie9.bModal{
+	background-color: #000
+}
+
+.okhub-source-logo {
+  width: 25%;    
+}
+
+.okhub-source-widget {
+    height: 30px;   
+    padding: 5px 5px 5px 5px;
+    border-width: 1px 3px 3px 1px;
+    border-color: lightgrey;
+    border-style: solid;
+    border-radius: 10px;
+    margin: 0px 0px 0px 10px;
+    background-color: white;
+    cursor: pointer;
+    font-size: 12px;
+}
+  
+.okhub-widget-source-description {
+    margin-top: 10px;
+    font-size: smaller;
+}
+
+#okhub-widget-tabs {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.okhub-widget-content {
+    padding-top: 15px;
+}
+
+.okhub-widget-selected {
+    border-width: 2px 1px 1px 2px;
+    position: relative;
+    top: 2px;
+    opacity: 0.8;    
+}
+
+.okhub-widget-item-description {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+

@@ -33,6 +33,7 @@ if (!defined('OKHUB_API_LIBRARY_DIR')) {
     $dir_wrapper = str_replace('okhubwrapper.wrapper.inc', '', $wrapper[0]);
     define('OKHUB_API_LIBRARY_DIR', $dir_wrapper);
     define('OKHUB_API_LIBRARY_PATH', plugin_basename($dir_wrapper));
+        
   }
   else {
     wp_die(__('OKHub Content: The PHP OKHub Wrapper was not found. Please download it from https://github.com/okhub-API/PHP-wrapper/archive/master.zip'));
@@ -199,6 +200,11 @@ function okhub_taxonomies_init() {
       add_action($manage_columns_action, 'okhub_edit_categories_populate_rows', 10, 3);
     }
   }
+  okhub_new_taxonomy(OKHUB_TAGS_TAXONOMY, 'OKHub Tags', 'OKHub Tag', FALSE);
+  foreach (okhub_assets() as $short_type) {
+    $post_type_name = okhub_custom_type_name($short_type); //'okhub_documents', 'okhub_organisations'
+    register_taxonomy_for_object_type(OKHUB_TAGS_TAXONOMY, $post_type_name);
+  }
 }
 
 function okhub_post_link($url) {
@@ -271,6 +277,8 @@ function okhub_query_vars($query_vars) {
   $query_vars[] = 'okhub_source';
   $query_vars[] = 'okhub_category';
   $query_vars[] = 'okhub_javascript';
+  $query_vars[] = 'okhub_get_item';
+  $query_vars[] = 'okhub_type';
   return $query_vars;
 }
 
@@ -353,7 +361,7 @@ function okhub_add_admin_stylesheet() {
 // Enqueue javascript
 function okhub_add_javascript($hook) {
   $okhub_datasets = okhub_datasets();
-  if ($hook == 'settings_page_okhub') { // Only in the admin page.
+  if ($hook == 'settings_page_okhub') { // Only in the plugin's admin page.
     wp_print_scripts( 'jquery' );
     wp_print_scripts( 'jquery-ui-tabs' );
     wp_register_script('okhub_chosen_javascript', OKHUB_SCRIPTS_PATH . '/chosen/chosen.jquery.js');
@@ -375,6 +383,10 @@ function okhub_add_javascript($hook) {
     wp_register_script('okhub_javascript', OKHUB_SCRIPTS_PATH . '/okhub.js');
     wp_enqueue_script('okhub_javascript');
     okhub_init_javascript();
+  }
+  elseif ($hook == 'widgets.php') {
+    wp_register_script('okhub_widget_javascript', OKHUB_SCRIPTS_PATH . '/okhub_widget.js');
+    wp_enqueue_script('okhub_widget_javascript');
   }
 }
 

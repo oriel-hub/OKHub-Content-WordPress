@@ -12,8 +12,7 @@ get_header(); ?>
 	<div id="primary" class="site-content">
 		<div id="content" role="main">
 			<?php while ( have_posts() ) : the_post(); ?>
-
-      <!-- We include 'content-ids_documents' here, instead of 'content'. -->
+      <!-- We include 'content-okhub_documents' here, instead of 'content'. -->
 			<?php require_once( 'content-okhub_documents.php' ); ?>
 
       <!-- If we want to, we can include the Edit link here, instead of in the content-ids_documents template.

@@ -12,6 +12,7 @@ if (!defined('OKHUB_API_ENVIRONMENT')) define('OKHUB_API_ENVIRONMENT', 'wordpres
 // This might be defined in OKHub Expose, too.
 if (!defined('OKHUB_TAXONOMY')) define('OKHUB_TAXONOMY', 'okhub_taxonomy');
 
+define('OKHUB_TAGS_TAXONOMY', 'okhub_tags');
 define('OKHUB_HIERARCHICAL_HUB_TYPES', 'themes,subjects');
 
 define('OKHUB_HUB_SOURCE_CODE', 'hub'); // This is defined in the wrapper as OKHUB_API_FN_SITE, but the name is misleading and might change.
@@ -55,7 +56,6 @@ define('OKHUB_API_PARAMETER_GENERIC_SEARCH', 'q');
 
 
 // Additional fields retrieved from the API.
-// The ones missing could be added to the wrapper's default settings (okhubwrapper.default.inc)?
 if (!defined('OKHUB_API_FN_ACRONYM')) define('OKHUB_API_FN_ACRONYM', 'acronym');
 if (!defined('OKHUB_API_FN_ALTERNATIVE_ACRONYM')) define('OKHUB_API_FN_ALTERNATIVE_ACRONYM', 'alternative_acronym');
 if (!defined('OKHUB_API_FN_ALTERNATIVE_NAME')) define('OKHUB_API_FN_ALTERNATIVE_NAME', 'alternative_name');
@@ -82,9 +82,17 @@ if (!defined('OKHUB_API_FN_PUBLICATION_DATE')) define('OKHUB_API_FN_PUBLICATION_
 if (!defined('OKHUB_API_FN_PUBLICATION_YEAR')) define('OKHUB_API_FN_PUBLICATION_YEAR', 'publication_year');
 if (!defined('OKHUB_API_FN_PUBLISHER')) define('OKHUB_API_FN_PUBLISHER', 'publisher'); // Publisher name present in sources like BRIDGE and Eldis. Use OKHUB_API_FN_ORGANISATION for the relationships to items of type Organisation in the hub.
 if (!defined('OKHUB_API_FN_PUBLISHER_COUNTRY')) define('OKHUB_API_FN_PUBLISHER_COUNTRY', 'publisher_country');
+if (!defined('OKHUB_API_FN_TOP_LEVEL')) define('OKHUB_API_FN_TOP_LEVEL', 'top_level');
+// Source fields
 if (!defined('OKHUB_API_FN_SOURCE_CODE')) define('OKHUB_API_FN_SOURCE_CODE', 'code');
 if (!defined('OKHUB_API_FN_SOURCE_NAME')) define('OKHUB_API_FN_SOURCE_NAME', 'title');
-if (!defined('OKHUB_API_FN_TOP_LEVEL')) define('OKHUB_API_FN_TOP_LEVEL', 'top_level');
+if (!defined('OKHUB_API_FN_SOURCE_CONTACT_NAME')) define('OKHUB_API_FN_SOURCE_CONTACT_EMAIL', 'contact_email');
+if (!defined('OKHUB_API_FN_SOURCE_CONTACT_ROLE')) define('OKHUB_API_FN_SOURCE_CONTACT_ROLE', 'contact_role');
+if (!defined('OKHUB_API_FN_SOURCE_DESCRIPTION')) define('OKHUB_API_FN_SOURCE_DESCRIPTION', 'description');
+if (!defined('OKHUB_API_FN_SOURCE_EDITORIAL_POLICY')) define('OKHUB_API_FN_SOURCE_EDITORIAL_POLICY', 'editorial_policy'); // Link, no language.
+if (!defined('OKHUB_API_FN_SOURCE_LICENSE_DESCRIPTION')) define('OKHUB_API_FN_SOURCE_LICENSE_DESCRIPTION', 'licence_description');
+if (!defined('OKHUB_API_FN_SOURCE_LOGO')) define('OKHUB_API_FN_SOURCE_LOGO', 'logo');
+if (!defined('OKHUB_API_FN_SOURCE_WEBSITE')) define('OKHUB_API_FN_SOURCE_WEBSITE', 'website');
 
 
 

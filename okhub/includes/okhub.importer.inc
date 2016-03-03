@@ -510,7 +510,7 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
     if ($countries_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_COUNTRY_FOCUS_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'countries', $countries_ids); }
     if ($regions_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_REGION_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'regions', $regions_ids); }
     if ($themes_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_THEME_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'themes', $themes_ids); }
-    if ($documenttypes_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_DOCUMENT_TYPE_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'documenttypes_ids', $themes_ids); }
+    if ($documenttypes_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_DOCUMENT_TYPE_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'documenttypes', $documenttypes_ids); }
     // ----- Add keywords as tags -----
     if ($import_keywords && $keywords_language = okhub_api_value_languages($asset, OKHUB_API_FN_KEYWORDS, $dataset, $accepted_languages, FALSE)) {
       foreach ($keywords_language as $keywords) {
@@ -520,7 +520,10 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
     // ----- Document-specific fields -----
     if ($post_type == 'okhub_documents') {
       // -- Multi-valued --    TODO: Consider the possibility of serializing multiple values in one unique meta field.
-      if ($authors = okhub_get_api_value($asset, OKHUB_API_FN_AUTHORS, $dataset, '', FALSE)) { okhub_add_post_array_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_AUTHORS, $dataset), $authors); }
+      if ($authors = okhub_get_api_value($asset, OKHUB_API_FN_AUTHORS, $dataset, '', FALSE)) {
+        okhub_add_post_array_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_AUTHORS, $dataset), $authors);
+        wp_set_post_terms($post_id, $authors, OKHUB_TAGS_TAXONOMY, TRUE);
+      }
       if ($urls = okhub_get_api_value($asset, OKHUB_API_FN_URLS, $dataset, '', FALSE)) { okhub_add_post_array_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_URLS, $dataset), $urls); }
       if ($language_names = okhub_get_api_value($asset, OKHUB_API_FN_LANGUAGE_NAME, $dataset, '', FALSE)) {
         foreach ($language_names as $language => $language_names_lang) {
@@ -532,8 +535,11 @@ function okhub_insert_asset($dataset, $post_type, $asset) {
       if ($publication_year = okhub_get_api_value($asset, OKHUB_API_FN_PUBLICATION_YEAR, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLICATION_YEAR, $dataset), $publication_year, TRUE); }
       if ($licence_type = okhub_get_api_value($asset, OKHUB_API_FN_LICENCE_TYPE, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_LICENSE_TYPE, $dataset), $licence_type, TRUE); }
       // These fields should in general be taxonomy terms, but they are not available as such in some sources, so if they are present we import them as fields anyway.
-      // TODO: Get from related organisations and link to corresponding WP org if it exists.
-      if ($publisher = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER, $dataset), $publisher, TRUE); }
+      // TODO: Check if the organisation exists and, if not, import it.
+      if ($publisher = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER, $dataset)) {
+        add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER, $dataset), $publisher, TRUE);
+        wp_set_post_terms($post_id, array($publisher), OKHUB_TAGS_TAXONOMY, TRUE);
+      }
       if ($publisher_country = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER_COUNTRY, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER_COUNTRY, $dataset), $publisher_country, TRUE); }
       if ($document_type = okhub_get_api_value($asset, OKHUB_API_FN_DOCUMENT_TYPE, $dataset)) { add_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_DOCUMENT_TYPE, $dataset), $document_type, TRUE); }
     }
@@ -635,7 +641,7 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
     if ($countries_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_COUNTRY_FOCUS_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'countries', $countries_ids); }
     if ($regions_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_REGION_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'regions', $regions_ids); }
     if ($themes_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_THEME_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'themes', $themes_ids); }
-    if ($documenttypes_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_DOCUMENT_TYPE_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'documenttypes_ids', $themes_ids); }
+    if ($documenttypes_ids = okhub_get_hub_relitems_field($asset, OKHUB_API_FN_DOCUMENT_TYPE_ARRAY, $dataset, OKHUB_API_FN_ITEM_ID)) { okhub_update_categories_post($post_id, $dataset, 'documenttypes', $documenttypes_ids); }
     // ----- Add keywords as tags -----
     if ($import_keywords && $keywords_language = okhub_api_value_languages($asset, OKHUB_API_FN_KEYWORDS, $dataset, $accepted_languages, FALSE)) {
       foreach ($keywords_language as $keywords) {
@@ -645,7 +651,9 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
     // ----- Document-specific fields -----
     if ($post_type == 'okhub_documents') {
       // -- Multi-valued --    TODO: Consider the possibility of serializing multiple values in one unique meta field.
-      if ($authors = okhub_get_api_value($asset, OKHUB_API_FN_AUTHORS, $dataset, '', FALSE)) { okhub_update_post_array_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_AUTHORS, $dataset), $authors); }
+      if ($authors = okhub_get_api_value($asset, OKHUB_API_FN_AUTHORS, $dataset, '', FALSE)) {
+        okhub_update_post_array_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_AUTHORS, $dataset), $authors);
+      }
       if ($urls = okhub_get_api_value($asset, OKHUB_API_FN_URLS, $dataset, '', FALSE)) { okhub_update_post_array_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_URLS, $dataset), $urls); }
       if ($language_names = okhub_get_api_value($asset, OKHUB_API_FN_LANGUAGE_NAME, $dataset, '', FALSE)) {
         foreach ($language_names as $language => $language_names_lang) {
@@ -656,7 +664,10 @@ function okhub_update_asset($post_id, $dataset, $post_type, $asset) {
       if ($publication_date = okhub_get_api_value($asset, OKHUB_API_FN_PUBLICATION_DATE, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLICATION_DATE, $dataset), $publication_date); }
       if ($publication_year = okhub_get_api_value($asset, OKHUB_API_FN_PUBLICATION_YEAR, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLICATION_YEAR, $dataset), $publication_year); }
       if ($licence_type = okhub_get_api_value($asset, OKHUB_API_FN_LICENCE_TYPE, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_LICENSE_TYPE, $dataset), $licence_type); }
-      if ($publisher = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER, $dataset), $publisher); }
+      if ($publisher = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER, $dataset)) { 
+        update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER, $dataset), $publisher); 
+        wp_set_post_terms($post_id, array($publisher), OKHUB_TAGS_TAXONOMY, TRUE);
+      }
       if ($publisher_country = okhub_get_api_value($asset, OKHUB_API_FN_PUBLISHER_COUNTRY, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_PUBLISHER_COUNTRY, $dataset), $publisher_country); }
       if ($document_type = okhub_get_api_value($asset, OKHUB_API_FN_DOCUMENT_TYPE, $dataset)) { update_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_DOCUMENT_TYPE, $dataset), $document_type); }
     }

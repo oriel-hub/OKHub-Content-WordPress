@@ -43,8 +43,9 @@
               <?php okhub_field(OKHUB_WP_FN_ACRONYM, $source_code, '', '<li class="okhub-field">' . __('Acronym: '), '</li>'); ?>
               <?php okhub_field(OKHUB_WP_FN_ORGANISATION_URL, $source_code, '', '<li class="okhub-field">' . __('Organisation URL: '), '</li>', 'link'); ?>
               <?php okhub_field(OKHUB_WP_FN_ORGANISATION_TYPE, $source_code, '', '<li class="okhub-field">' . __('Organisation type: '), '</li>'); ?>
-              <?php okhub_field(OKHUB_WP_FN_LOCATION_COUNTRY, $source_code, '', '<li class="okhub-field">' . __('Location country: '), '</li>'); ?>
+              <?php okhub_field(OKHUB_WP_FN_LOCATION_COUNTRY, $source_code, '', '<li class="okhub-field">' . __('Location country: '), '</li>', 'tags'); ?>
               <?php okhub_field(OKHUB_WP_FN_DATE_UPDATED, $source_code, '', '<li class="okhub-field">' . __('Updated on: '), '</li>', array('date', 'Y/m/d')); ?>
+              <?php okhub_field(OKHUB_WP_FN_WEBSITE_URL, $source_code, '', '<li class="okhub-field">' . __('Source\'s URL: '), '</li>', 'link'); ?>
             </ul>
 
             <!-- Source categories -->

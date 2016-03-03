@@ -18,7 +18,7 @@ function okhub_get_sources() {
 // Prints the value (or values) of a field.
 function okhub_field($field_name, $source='', $language='', $before='', $after='', $format='', $separator=', ') {
   $field = okhub_get_field($field_name, $source, $language, $format, $separator);
-  if ($field) {
+  if (is_scalar($field) && ($field !== '')) {
     echo $before . $field . $after;
   }
 }
@@ -33,7 +33,7 @@ function okhub_get_field($field_name, $source='', $language='', $format='', $sep
   if ($language) {
     $field_name .= '_' . $language;
   }
-  $fields = (isset($post->{$field_name}) ? $post->{$field_name} : get_post_meta($post->ID, $field_name));
+  $fields = get_post_meta($post->ID, $field_name);
   if (!$language && $fields === array()) {
     $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
     $additional_languages = okhubapi_variable_get('okhub', 'additional_languages', array());
@@ -47,9 +47,7 @@ function okhub_get_field($field_name, $source='', $language='', $format='', $sep
   if (is_array($fields)) {
     $array_fields=array();
     foreach ($fields as $field) {
-      if ($field) {
-        $array_fields[] = okhub_format_field($field, $format);
-      }
+      $array_fields[] = okhub_format_field($field, $format);
     }
     $fields = implode($separator, $array_fields);
   }
@@ -121,6 +119,7 @@ function okhub_get_list_categories($post_id, $category, $source, $before='', $se
 /*----------------------------------------  Specific template tag functions -------------------------------- */
 /*** These functions are deprecated and left only for backwards compatibility. Use the generic ones, above ***/
 
+/*
 // okhub_acronym
 function okhub_acronym($before='', $after='') {
   $acronym = okhub_get_acronym();
@@ -300,6 +299,8 @@ function okhub_get_themes($before='', $sep=', ', $after='', $base_url='') {
   return okhub_categories_links('themes', $before='', $sep=', ', $after='', $base_url='');
 }
 
+*/
+
 //-------------------- Functions used to generate/format the output --------------------
 
 // Given a category object, returns a link to it.
@@ -323,26 +324,34 @@ function okhub_links_category($categories, $baseurl='') {
 
 // okhub_format_field
 function okhub_format_field($field, $format) {
-  if (is_array($format)) {
-    list($format_type, $format_data) = $format;
-  }
-  else {
-    $format_type = $format;
-    $format_data = '';
-  }
-  switch ($format_type) {
-    case 'date':
-      if (!is_numeric($field)) {
-        $field = strtotime($field);
-      }
-      if (!$format_data) {
-        $format_data = get_option('date_format');
-      }
-      $field = date_i18n($format_data, $field);
-      break;
-    case 'link':
+  if (is_scalar($field)) {
+    if (is_array($format)) {
+      list($format_type, $format_data) = $format;
+    }
+    else {
+      $format_type = $format;
+      $format_data = '';
+    }
+    switch ($format_type) {
+      case 'date':
+        if (!is_numeric($field)) {
+          $field = strtotime($field);
+        }
+        if (!$format_data) {
+          $format_data = get_option('date_format');
+        }
+        $field = date_i18n($format_data, $field);
+        break;
+      case 'link':
         $field = okhub_new_html_link($field, $format_data);
         break;
+      case 'tags':
+        $terms = get_term_link($field, OKHUB_TAGS_TAXONOMY);
+        if (is_string($terms)) {
+          $field = okhub_new_html_link($terms, $field);
+        }
+        break;
+    }
   }
   return $field;
 }
@@ -649,9 +658,20 @@ function okhub_javascript_trigger() {
     echo okhub_js_array($categories);
     exit;
   }
+  elseif (($item_id=get_query_var('okhub_get_item')) && ($dataset=get_query_var('okhub_source')) && ($type=get_query_var('okhub_type'))) {
+    OKHub_Widget::displayItem($item_id, $dataset, $type);
+    exit;
+  }
 }
 
-
+function okhub_init_javascript_widget() {
+?>
+<script type="text/javascript">
+var home_url = '<?php echo get_site_url(); ?>';
+var okhub_widget_assets = [];
+</script>
+<?php
+}
 
 
 

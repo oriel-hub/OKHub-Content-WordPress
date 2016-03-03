@@ -45,19 +45,22 @@
       <div class="okhub-fields">
           <!-- Get the sources for which there is content in the post and, for each one, display the imported fields. -->
           <?php foreach (okhub_get_sources() as $source_code => $source_name) { ?>
-            <h2>Content by <?php echo $source_name; ?></h2>
-            <!-- Source fields -->
+            <?php $source = okhub_get_source($source_code); // Retrieve array with source information. See okhub.default.inc for a list of all available source's fields. ?>
+            
+            <h2>Content by <?php echo $source_name; ?> (<a href="#about_<?php echo $source_code; ?>">*</a>)</h2>
+            
+            <!------ Source fields ------>
             <!-- See the file "includes/okhub.settings.inc" for the complete list of available fields.
                  The field names used in Worpdress when importing content from the OKHub can be changed in that file. -->
             <!-- The function okhub_field is used to retrieve the fields values:
                   okhub_field($field_name, $source='', $language='', $before='', $after='', $format='', $separator=', '); -->
             <ul>
-              <?php okhub_field(OKHUB_WP_FN_AUTHORS, $source_code, '', '<li class="okhub-field">' . __('Authors: '), '</li>'); ?>
+              <?php okhub_field(OKHUB_WP_FN_AUTHORS, $source_code, '', '<li class="okhub-field">' . __('Authors: '), '</li>', 'tags'); ?>
               <!-- If there is content for this field, the above is the same as:
                    <li class="okhub-field"> <?php __('Authors:'); ?> <?php okhub_field(OKHUB_WP_FN_AUTHORS, $source_code); ?> </li>
                    Except that passing the 'before' and 'after' strings to okhub_field() makes it unnecessary to check if
                    the field has some valid value. -->
-              <?php okhub_field(OKHUB_WP_FN_PUBLISHER, $source_code, '', '<li class="okhub-field">' . __('Publisher: '), '</li>'); ?>
+              <?php okhub_field(OKHUB_WP_FN_PUBLISHER, $source_code, '', '<li class="okhub-field">' . __('Publisher: '), '</li>', 'tags'); ?>
               <?php okhub_field(OKHUB_WP_FN_LICENSE_TYPE, $source_code, '', '<li class="okhub-field">' . __('License type: '), '</li>'); ?>
               <!-- Translatable fields can be retrieved in a particular language. If left empty, the value in thepreferred language
                    will be returned (or in one of the alternative languages, if not available in the preferred language). 
@@ -69,9 +72,11 @@
               <!-- Alternatively: okhub_field(OKHUB_WP_FN_DATE_UPDATED, '', '<li class="okhub-field">' . __('Updated on: '), '</li>', 'date') would use the date format in Wordpress' settings.  -->
               <?php okhub_field(OKHUB_WP_FN_URLS, $source_code, '', '<li class="okhub-field">' . __('External URLs: '), '</li>', 'link'); ?>
               <!-- Alternatively: okhub_field(OKHUB_WP_FN_URLS, $source_code, '', '<li class="okhub-field">' . __('External URLs: '), '</li>', array('link', 'Some text')) can be used to display a text in the link instead of the URL -->
+              <?php okhub_field(OKHUB_WP_FN_WEBSITE_URL, $source_code, '', '<li class="okhub-field">' . __('Source\'s URL: '), '</li>', 'link'); ?>
+              <?php if (!empty($source[OKHUB_API_FN_SOURCE_LICENSE_DESCRIPTION])) { ?><li> License description: <?php echo $source[OKHUB_API_FN_SOURCE_LICENSE_DESCRIPTION]; ?></small> <?php } ?>
             </ul>
 
-            <!-- Source categories -->
+            <!------ Source categories ------>
             <!-- Call to okhub_post_categories_source() to check if there are categories from this source for this post.
                  The return value of this function could be used to display the categories,
                  without invoking to okhub_terms(), used here to show another way of displaying the categories. -->
@@ -84,9 +89,25 @@
                 <?php okhub_terms('themes', $source_code, '<li class="okhub-field">' . __('Themes: '), '</li>'); ?>
                 <?php okhub_terms('documenttypes', $source_code, '<li class="okhub-field">' . __('Document Types: '), '</li>'); ?>
               </ul>
+            <?php } ?>
+
+            <!------ Source description ------>
+            <a name="about_<?php echo $source_code; ?>"></a>
+            <p><small><?php echo (!empty($source[OKHUB_API_FN_SOURCE_DESCRIPTION])) ? $source[OKHUB_API_FN_SOURCE_DESCRIPTION] : ''; ?></small></p>
             <?php
-            } //if
-          } // foreach source?>
+            if (!empty($source[OKHUB_API_FN_SOURCE_WEBSITE])) {
+              $source_website = $source[OKHUB_API_FN_SOURCE_WEBSITE];
+              if (!empty($source[OKHUB_API_FN_SOURCE_LOGO])) {
+                echo '<a href="'.$source_website.'"><img class="okhub-source-logo" src="'.$source[OKHUB_API_FN_SOURCE_LOGO].'"></a>';
+              }
+              else {
+                echo '<small><a href="'.$source_website.'">'.$source_website.'</a></small>';
+              }
+            }
+            ?>
+            <?php
+          } // foreach source
+          ?>
         </ul>
       </div>
 			<?php endif; // is_single() ?>
@@ -97,8 +118,7 @@
 
 		<footer class="entry-meta">
 			<?php twentytwelve_entry_meta(); ?>
-      <!-- The edit link does not make sense with content retrieved with the API, so we comment it here. We can include it in single-ids_documents.php for imported documents -->
-			<!--?php edit_post_link( __( 'Edit', 'twentytwelve' ), '<span class="edit-link">', '</span>' ); ?-->
+			<?php edit_post_link( __( 'Edit', 'twentytwelve' ), '<span class="edit-link">', '</span>' ); ?>
 			<?php if ( is_singular() && get_the_author_meta( 'description' ) && is_multi_author() ) : // If a user has filled out their description and this is a multi-author blog, show a bio on their entries. ?>
 				<div class="author-info">
 					<div class="author-avatar">

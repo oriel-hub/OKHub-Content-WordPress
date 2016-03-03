@@ -87,5 +87,11 @@ define('OKHUB_TAGS', TRUE);
 define('OKHUB_WIDGET_ASSETS_TYPE', 'documents');
 define('OKHUB_WIDGET_TITLE', 'OKHub updates');
 define('OKHUB_WIDGET_NUM_ITEMS', 10);
+define('OKHUB_WIDGET_MAX_ITEMS', 100);
+define('OKHUB_WIDGET_ERROR_MESSAGES', TRUE); // Set to TRUE to allow the user to display widget's error messages. In general, it's only useful while in development.
+define('OKHUB_WIDGET_TEMPLATE_DOCUMENTS', 'widget-okhub_documents.php');
+define('OKHUB_WIDGET_TEMPLATE_ORGANISATIONS', 'widget-okhub_organisations.php');
+define('OKHUB_WIDGET_ITEM_TEMPLATE_DOCUMENTS', 'widget-single-okhub_documents.php');
+define('OKHUB_WIDGET_ITEM_TEMPLATE_ORGANISATIONS', 'widget-single-okhub_organisations.php');
 
 /*--------------------------------- End default settings -----------------------------------*/

@@ -161,6 +161,62 @@ function okhub_taxonomy_short_name($taxonomy_name) {
   return $short_name;
 }
 
+function okhub_get_item($type, $item_id) {
+  $item = FALSE;
+  if ($api_key = okhubapi_variable_get('okhub', 'api_key', FALSE)) {
+    $okhubapi = new OkhubApiWrapper;
+    $response = $okhubapi->get($type, OKHUB_HUB_SOURCE_CODE, $api_key, 'full', $item_id);
+    if (!$response->isEmpty()) {
+      if ($items = $response->getResults()) {
+        $item = current($items);
+      }
+    }
+  }
+  return $item;
+}
+
+function okhub_get_items($type, $filters) {
+  $items = array();
+  if ($api_key = okhubapi_variable_get('okhub', 'api_key', FALSE)) {
+    $okhubapi = new OkhubApiWrapper;
+    $response = $okhubapi->search($type, OKHUB_HUB_SOURCE_CODE, $api_key, 'full', 0, 0, 0, $filters);
+    if (!$response->isEmpty()) {
+      $items = $response->getResults();
+    }
+  }
+  return $items; 
+}
+
+function okhub_get_all($type) {
+  $items = array();
+  $okhub_datasets = okhubapi_variable_get('okhub', 'okhub_datasets', array());
+  if ($force_update || empty($okhub_datasets)) {
+    $okhubapi = new OkhubApiWrapper;
+    $api_key = okhubapi_variable_get('okhub', 'api_key', '');
+    $response = $okhubapi->getAll($type, OKHUB_HUB_SOURCE_CODE, $api_key, 'full');
+    if (!$response->isEmpty()) {
+      $items = $response->getResults();
+    }
+  }
+  return $items;
+}
+
+function okhub_get_source($code) {
+  $source = array();
+  if ($sources = okhub_get_items('sources', array('code'=>$code))) {
+    $source_data = current($sources);
+    if ($name = okhub_get_api_value($source_data, OKHUB_API_FN_SOURCE_NAME, OKHUB_OKHUB_SOURCE_CODE)) { $source[OKHUB_API_FN_SOURCE_NAME] = $name; }
+    if ($contact_email = okhub_get_api_value($source_data, OKHUB_API_FN_SOURCE_CONTACT_EMAIL, OKHUB_OKHUB_SOURCE_CODE)) { $source[OKHUB_API_FN_SOURCE_CONTACT_EMAIL] = $contact_email; }
+    if ($contact_role = okhub_get_api_value($source_data, OKHUB_API_FN_SOURCE_CONTACT_ROLE, OKHUB_OKHUB_SOURCE_CODE)) { $source[OKHUB_API_FN_SOURCE_CONTACT_ROLE] = $contact_role; }
+    if ($description = okhub_get_api_value($source_data, OKHUB_API_FN_SOURCE_DESCRIPTION, OKHUB_OKHUB_SOURCE_CODE)) { $source[OKHUB_API_FN_SOURCE_DESCRIPTION] = $description; }
+    if ($editorial_policy = okhub_get_api_value($source_data, OKHUB_API_FN_SOURCE_EDITORIAL_POLICY, OKHUB_OKHUB_SOURCE_CODE)) { $source[OKHUB_API_FN_SOURCE_EDITORIAL_POLICY] = $editorial_policy; }
+    if ($license_description = okhub_get_api_value($source_data, OKHUB_API_FN_SOURCE_LICENSE_DESCRIPTION, OKHUB_OKHUB_SOURCE_CODE)) { $source[OKHUB_API_FN_SOURCE_LICENSE_DESCRIPTION] = $license_description; }
+    if ($website = okhub_get_api_value($source_data, OKHUB_API_FN_SOURCE_WEBSITE, OKHUB_OKHUB_SOURCE_CODE)) { $source[OKHUB_API_FN_SOURCE_WEBSITE] = $website; }
+    if (($logo_field = okhub_get_api_value($source_data, OKHUB_API_FN_SOURCE_LOGO, OKHUB_OKHUB_SOURCE_CODE, '', FALSE)) && ($logo = current(array_filter($logo_field, function($l){return preg_match('/^http:\/\//', $l);})))) { $source[OKHUB_API_FN_SOURCE_LOGO] = $logo; } 
+  }
+  return $source;  
+}
+
 function okhub_get_post_sources($post_id) { 
   return get_post_meta($post_id, OKHUB_WP_FN_HIDDEN_SOURCES);
 }
@@ -168,22 +224,19 @@ function okhub_get_post_sources($post_id) {
 function okhub_get_hub_relitems_field($object, $field_name, $dataset='hub', $rel_field) {
   // For some reason the API is returning always an array with one element, which is an array with one element indexed by the lower-case name of the rel. item type.
   $items_ids = array();
-  $rel_items_api = okhub_get_api_value($object, $field_name, $dataset);
-  if (($rel_items = okhub_get_api_value($object, $field_name, $dataset)) && is_array($rel_items) && ($rel_items_api = current($rel_items))) {    
-    if (is_array($rel_items_api)) {     
-      if (is_numeric(key($rel_items_api))) {
-        foreach ($rel_items_api as $rel_item) {
+  $rel_items = okhub_get_api_value($object, $field_name, $dataset);
+  if (is_array($rel_items) && ($items = current($rel_items))) { 
+    if (is_array($items)) {     
+      if (is_numeric(key($items))) {
+        foreach ($items as $rel_item) {
           if (isset($rel_item[$rel_field])) {
             $items_ids[] = $rel_item[$rel_field];
           }
         }
       }
-      elseif (isset($rel_items_api[$rel_field])) {
-        $items_ids[] = $rel_items_api[$rel_field];
+      elseif (isset($items[$rel_field])) {
+        $items_ids[] = $items[$rel_field];
       }
-    }
-    else {
-      $items_ids[] = $rel_items_api;
     }
   }
   return $items_ids;
