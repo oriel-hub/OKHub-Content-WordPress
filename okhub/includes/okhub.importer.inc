@@ -14,10 +14,7 @@ if ( !class_exists( 'WP_Importer' ) ) {
 
 if ( class_exists( 'WP_Importer' ) ) {
 class OkhubImporter extends WP_Importer {
-
-  // Posts and taxonomy terms created/updated
-  var $terms = array();
-
+  
 //--------------------------- User interface methods -----------------------------
 
   // Determine what to display to the user, depending on the step.
@@ -28,103 +25,69 @@ class OkhubImporter extends WP_Importer {
 		else  {
 			$step = (int) $_GET['step'];
     }
-		$this->header();
+		okhub_import_header();
 		switch ($step) {
 			case 0:
 				$this->greet();
 				break;
 			case 1:
         check_admin_referer('okhub_import', 'okhub_import_check_referrer');
-        $importer_url = admin_url() . 'admin.php?import=okhub_importer';
-        printf('<div class="okhub-title-output-importer">' . __('Go back to the <a href="%s">OKHub Importer</a>') . '</div>', $importer_url);
+        okhubapi_variable_set('okhub', 'import_display', array());
         $this->import();
-        $this->display_results();
-        okhubapi_report_errors();
 				break;
 		}
-		$this->footer();
-	}
-
-  // Display header.
-	function header() {
-		echo '<div class="okhub-wrap">';
-		screen_icon();
-		echo '<h2>'.__('OKHub Content - Importer', 'okhub-importer').'</h2>';
-	}
-
-  // Display footer.
-	function footer() {
-		echo '</div>';
+    okhubapi_report_errors();
+		okhub_import_footer();
 	}
 
   // Display main import page. Selection of types of items to import.
-	function greet() {
+	function greet() {       
 		$okhub_setup_done = okhubapi_variable_get('okhub', 'setup_done', FALSE);
-		?>
-		<div class="narrow">
-		<?php 
 		if (!$okhub_setup_done) {
-      echo '<p>'.sprintf(__('Before starting to import OKHub content, you need you need to set a number of parameters, including the OKHub API key, at the <a href="%s">OKHub Plugin administrative page</a>.', 'okhub_importer'), 'options-general.php?page=okhub').'</p>'; 
+      $output = '<p>'.sprintf(__('Before starting to import OKHub content, you need you need to set a number of parameters, including the OKHub API key, at the <a href="%s">OKHub Plugin administrative page</a>.', 'okhub_importer'), 'options-general.php?page=okhub').'</p>';
+      echo okhub_div_field_wrapper('notice notice-warning okhub-results-import', '', '', $output);         
 		}
     else {
-      okhub_importer_form();
-    }
-  }
-
-  // Display a summary of the importing process.
-  function display_results() {
-    $total = 0;
-    foreach ($this->terms as $dataset => $results_dataset) {
-      $exclude = FALSE;
-      $dataset_acronym = okhub_get_dataset_acronym($dataset);
-      foreach ($results_dataset as $type => $results) {
-        $type_name = okhub_get_type_name($type, TRUE);
-        $exclude = !okhub_has_content($dataset, $type);
-        if (!$exclude) {
-          if ($results['new']) {
-            $total += $results['new'];
-            $output = __('Created ') . $results['new'] . ' ' . $dataset_acronym . ' ' . __($type_name);
-            echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
-          }
-          if ($results['updated']) {
-            $total += $results['updated'];
-            $output = __('Updated ') . $results['updated'] . ' ' . $dataset_acronym . ' ' . __($type_name);
-            echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
-          }
-          if (isset($results['skipped']) && $results['skipped']) {
-            $output = __('Skipped ') . $results['skipped'] . ' ' . $dataset_acronym . ' ' . __($type_name);
-            echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
-          }
-        }
-        if (!$total && !$exclude) {
-          $output = __('No '). strtolower($type_name) . __(' imported from ') . $dataset_acronym;
-          echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
-        }
+      if (okhub_import_in_progress()) {
+        $output = __('Import in process... ');
+        $importer_url = admin_url() . 'admin.php?import=okhub_importer';
+        $output .= sprintf(__('<a href="%s">Reload</a> in order to follow the progress.'), $importer_url);
+        echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
+        okhub_import_display_results();
+      }    
+      else {
+        okhub_importer_form();
       }
     }
   }
-//-------------------------------- Import methods ------------------------------
 
   // Check which types of content to import and call to import methods. If selected, categories are imported first.
   // Keeps track of latest dates and results for each type, in order to display this information on the admin page (periodic imports do the same).
   function import() {
+    $importer_url = admin_url() . 'admin.php?import=okhub_importer';
     $datasets = okhub_selected_datasets();
     $okhub_categories = okhub_categories();
     $okhub_assets = okhub_assets();
     $date = date(DATE_RFC822);
     $okhub_new_categories = okhubapi_variable_get('okhub', 'import_new_categories', OKHUB_NEW_CATEGORIES);
     $okhub_import_dates = okhubapi_variable_get('okhub', 'import_dates', array());
-    $okhub_import_results = okhubapi_variable_get('okhub', 'import_results', array());
     $force_update = !empty($_POST['okhub_force_update']);
+    $output = '';
+    $content_available = FALSE;
     foreach ($datasets as $dataset) {
       // Import selected categories (if the option is enabled).
       if ($okhub_new_categories) {
         foreach ($okhub_categories as $category) {
           $parameter_name = 'okhub_import_' . $category;
           if (!empty($_POST[$parameter_name])) {
-            $this->import_categories($dataset, $category);
-            @$okhub_import_dates[$dataset][$category] = $date;
-            @$okhub_import_results[$dataset][$category] = $this->terms[$dataset][$category];
+            if (okhub_has_content($dataset, $category)) {
+              $content_available = TRUE;
+              @$okhub_import_dates[$dataset][$category] = $date;
+              wp_schedule_single_event(time(), 'okhub_import_batches', array('categories', $dataset, $category, $force_update, 0));
+            }
+            else {
+              $output .= "<p>No $category available for $dataset.</p>";
+            }
           }
         }
       }
@@ -132,318 +95,426 @@ class OkhubImporter extends WP_Importer {
       foreach ($okhub_assets as $asset) {
         $parameter_name = 'okhub_import_' . $asset;
         if (!empty($_POST[$parameter_name])) {
-          $this->import_assets($dataset, $asset, $force_update);
-          @$okhub_import_dates[$dataset][$asset] = $date;
-          @$okhub_import_results[$dataset][$asset] = $this->terms[$dataset][$asset];
-        }
-      }
-    }
-    okhubapi_variable_set('okhub', 'import_dates', $okhub_import_dates);
-    okhubapi_variable_set('okhub', 'import_results', $okhub_import_results);
-  }
-
-  // Import assets.
-  function import_assets($dataset, $type, $force_update=FALSE) {
-    $type_name = okhub_get_type_name($type, TRUE);
-    $dataset_acronym = okhub_get_dataset_acronym($dataset);
-    $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
-    $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes', array_keys(okhub_languages())); 
-    $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
- 		$updated_assets = okhubapi_variable_get('okhub', 'updated_assets', OKHUB_UPDATED_ASSETS);
-    $this->terms[$dataset][$type] = array('new' => 0, 'updated' => 0, 'skipped' => 0, 'duplicated' => 0);
-    if (okhub_has_content($dataset, $type)) {
-      if ($assets = $this->retrieve_content($dataset, $type)) {
-        if (!empty($assets)) {
-          $post_type = okhub_custom_type_name($type);
-          if (post_type_exists($post_type)) {
-            if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-              $output = __('Importing') . " $dataset_acronym " . __($type_name) . '...';
-              echo okhub_div_field_wrapper('notice notice-success okhub-title-output-importer', '', '', $output);
-              echo '<ul>';
-            }
-            foreach ($assets as $asset) {
-              $titles = okhub_api_value_languages($asset, OKHUB_API_FN_TITLE, $dataset, $preferred_languages);
-              $hub_id = okhub_get_api_value($asset, OKHUB_API_FN_ITEM_ID);
-              if ($titles && $hub_id) {
-                $title = current($titles);
-                if ($post_id = okhub_get_id_by_meta('post', OKHUB_WP_FN_HUB_ITEM_ID, $hub_id)) { // The item already exists in WP (maybe not for the same dataset).
-                  $post_status = get_post_status($post_id);
-                  $post_sources = okhub_get_post_sources($post_id);
-                  if (in_array($dataset, $post_sources) && ($post_status == 'pending' || $post_status == 'publish')) { // There's content for this source and the status is pending or publish.
-                    // Compare latest hub timestamp in WP for the source with the hub timestamp in the API response.
-                    // It's necessary to consider the source because the post could have been updated more recently for another source.
-                    if (!$force_update) {
-                      $old_hub_timestamp = get_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_HUB_TIMESTAMP, $dataset), TRUE);
-                      if (!is_numeric($old_hub_timestamp)) {
-                        $old_hub_timestamp = strtotime($old_hub_timestamp);
-                      }
-                      $current_hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP);
-                      if (!is_numeric($current_hub_timestamp)) {
-                        $current_hub_timestamp = strtotime($current_hub_timestamp);
-                      }
-                      $force_update = (!$old_hub_timestamp || !$current_hub_timestamp || $current_hub_timestamp > $old_hub_timestamp);
-                    }
-                    if ($force_update) { // The date is not defined, the new version is more recent or the update was forced.
-                      switch ($updated_assets) {
-                        case 'overwrite':   
-                          $post_id = okhub_update_asset($post_id, $dataset, $post_type, $asset);
-                          if ($post_id) {
-                            if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                              $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __('updated');
-                              echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
-                            }
-                            $this->terms[$dataset][$type]['updated']++;
-                          }
-                          else {
-                            okhubapi_register_error('okhub', __('The post could not be updated for item with id ') . $hub_id, 'OkhubImporter::import_assets', 'warning');
-                          }
-                          break;
-                        case 'skip':
-                          if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                            $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __('skipped (most recent version already imported)');
-                            echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
-                          }
-                          $this->terms[$dataset][$type]['skipped']++;
-                          break;
-                      }
-                    }
-                    else { // There's content for this source and the version being imported is not more recent and it's currently published or pending. We always skip it in this case.
-                      if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                        $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __('skipped (most recent version already imported)');
-                        echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
-                      }
-                      $this->terms[$dataset][$type]['skipped']++;
-                    }
-                  }
-                  else { // The existing version is not published or pending - or there's no content for this source. We update it.
-                    if ($post_id = okhub_update_asset($post_id, $dataset, $post_type, $asset)) {
-                      if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                        $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __(' updated');
-                        echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
-                      }
-                      $this->terms[$dataset][$type]['updated']++;
-                    }
-                    else {
-                      okhubapi_register_error('okhub', __('The post could not be updated for item with id ') . $hub_id, 'OkhubImporter::import_assets', 'warning');
-                    }
-                  }
-                }
-                else { // The item does not exist. Create it.
-                  if ($post_id = okhub_insert_asset($dataset, $post_type, $asset)) {
-                    if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                      $output = '<li> <a href="'.get_edit_post_link($post_id).'">'.$title.'</a>' . ' - ' . __('new');
-                      echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
-                    }
-                    $this->terms[$dataset][$type]['new']++ ;
-                  }
-                  else {
-                    okhubapi_register_error('okhub', __('A new post could not be created for item with id ') . $hub_id, 'OkhubImporter::import_assets', 'warning');
-                  }
-                }
-              }
-            }
-            echo '</ul>';
-          }
-        }
-        else {
-          okhubapi_register_error('okhub', __('Sorry, we cannot find any content that matches your criteria. Please remove some filters or search more generally and try again.'), 'OkhubImporter::import_assets', 'notification', FALSE);
-        }
-      }
-    }
-    else {
-      $output = __('No ') . __(strtolower($type_name)) . ' found in the hub for the source "' .$dataset_acronym. '"';
-      echo okhub_div_field_wrapper('notice notice-warning okhub-title-output-importer', '', '', $output);
-    }
-  }
-
-  // Import categories.
-  function import_categories($dataset, $type) {
-    $type_name = okhub_get_type_name($type, TRUE);
-    $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
-    $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes',  array_keys(okhub_languages())); 
-    $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
-    if (okhub_has_content($dataset, $type)) {
-      $this->terms[$dataset][$type] = array('new' => 0, 'updated' => 0);
-      if ($categories = $this->retrieve_content($dataset, $type)) {
-        if (!empty($categories)) {
-          $taxonomy_name = okhub_custom_taxonomy_name($dataset, $type);
-          if (taxonomy_exists($taxonomy_name)) {
-            $dataset_acronym = okhub_get_dataset_acronym($dataset);
-            if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-              $output = __('Importing') . " $dataset_acronym " . __($type_name) . '...';
-              echo okhub_div_field_wrapper('notice notice-success okhub-title-output-importer', '', '', $output);
-            }
-            echo '<ul>';
-            foreach ($categories as $category) {
-              $hub_id = okhub_get_api_value($category, OKHUB_API_FN_ITEM_ID);
-              $category_names = okhub_get_category_names_language($category, $dataset, $preferred_languages);
-              $category_name = current($category_names);
-              if ($hub_id && $category_name) {
-                if ($term_id = okhub_get_id_by_meta(OKHUB_TAXONOMY, OKHUB_WP_FN_HUB_ITEM_ID, $hub_id)) { // The taxonomy term exists.
-                  // Update the term corresponding to the category.
-                  if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                    $output = '<li>' . $category_name . ' - ' . __('updated');
-                    echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
-                  }
-                  if (okhub_update_category($term_id, $dataset, $taxonomy_name, $category)) {
-                    $this->terms[$dataset][$type]['updated']++;
-                  }
-                  else {
-                    okhubapi_register_error('okhub', __('The term could not be updated for category with id ') . $hub_id, 'import_categories', 'warning');
-                  }
-                }
-                else {
-                  // Create a new term for the category.
-                  if (is_admin() && OKHUB_VERBOSE_IMPORT) {
-                    $output = '<li>' . $category_name . ' - ' . __('new');
-                    echo okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
-                  }
-                  $term_id = okhub_insert_category($dataset, $taxonomy_name, $category);
-                  if ($term_id) {
-                    $this->terms[$dataset][$type]['new']++ ;
-                  }
-                  else {
-                    okhubapi_register_error('okhub', __('A new term could not be created for category with id ') . $hub_id, 'import_categories', 'warning');
-                  }
-                }
-              }
-            }
-            echo '</ul>';
-          }
-        }
-        else {
-          okhubapi_register_error('okhub', __('No categories were retrieved by the API call.'), 'import_categories', 'warning');
-        }
-      }
-    }
-  }
-
-  // Call the API to retrieve content of the indicated type, using the the plugin settings.
-  function retrieve_content($dataset, $type) {
-    $content = array();
-    $okhubapi = new OkhubApiWrapper;
-    $api_key = okhubapi_variable_get('okhub', 'api_key', '');
-    $format = 'full';
-    $filter_params = array();
-    // Source filter
-    $filter_params[OKHUB_API_PARAMETER_SOURCES] = $dataset;
-    $is_asset = ($type == 'documents' || $type == 'organisations');
-    if ($is_asset) {
-      $num_requested = okhubapi_variable_get('okhub', 'num_items', OKHUB_API_NUM_ITEMS);
-      $age_results = okhubapi_variable_get('okhub', 'age_new_assets', OKHUB_API_AGE_NEW_ASSETS); // Always 0 now as it's currently not supported and it's commented in the settings page.
-      $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes', array()); 
-      $okhub_import_query = okhubapi_variable_get('okhub', 'import_query', '');
-      $okhub_import_countries_assets = okhubapi_variable_get('okhub', $dataset . '_countries_assets', array());
-      $okhub_import_regions_assets = okhubapi_variable_get('okhub', $dataset . '_regions_assets', array());
-      $okhub_import_themes_assets = okhubapi_variable_get('okhub', $dataset . '_themes_assets', array());
-      // Generic query
-      if ($okhub_import_query) {
-        $search_params = explode(',', $okhub_import_query);
-        foreach ($search_params as $search_param) {
-          $param = explode('=', trim($search_param));
-          $key = $param[0];
-          $value = $param[1];
-          $filter_params[$key] = $value;
-        }
-      }
-      // Category-based filters
-      if (!empty($okhub_import_countries_assets)) {
-        $filter_params[OKHUB_API_PARAMETER_COUNTRY_ID] = implode('|', $okhub_import_countries_assets);
-      }
-      if (!empty($okhub_import_regions_assets)) {
-        $filter_params[OKHUB_API_PARAMETER_REGION_ID] = implode('|', $okhub_import_regions_assets);
-      }
-      if (!empty($okhub_import_themes_assets)) {
-        $filter_params[OKHUB_API_PARAMETER_THEME_ID] = implode('|', $okhub_import_themes_assets);
-      }
-      // Document-specific filters
-      if ($type == 'documents') {
-        $okhub_import_authors_assets = okhubapi_variable_get('okhub', 'import_authors_assets', '');
-        if ($okhub_import_authors_assets) {
-          $authors = explode(',', $okhub_import_authors_assets);
-          $list_authors = implode('|', array_map('trim', $authors));
-          $filter_params[OKHUB_API_PARAMETER_AUTHOR] = $list_authors;
-        }
-        $okhub_import_publishers_assets = okhubapi_variable_get('okhub', 'import_publishers_assets', '');
-        if ($okhub_import_publishers_assets) {
-          $publishers = explode(',', $okhub_import_publishers_assets);
-          $list_publishers = implode('|', array_map('trim', $publishers));
-          $filter_params['publisher_name'] = $list_publishers;
-        }
-        // Only retrieve content in these languages.
-        // The results are further refined (below) considering whether they have 'relevant' content (title, description) in these languages.
-        if ($language_filters) {
-          $language_codes = implode('|', $language_filters);
-          $filter_params[OKHUB_API_PARAMETER_LANGUAGES] = $language_codes;
-        }
-      }
-      // Keep only those assets whose URIs don't match the ones to exclude and that have 'relevant' content in the selected languages.
-      // Paginate until we get the number requested.
-      $num_responses = 0;
-      $num_retrieved = 0;
-      $total_results = 0;
-      $offset = 0;
-      $more_results = TRUE;
-      $exclude_uris = okhubapi_variable_get('okhub', 'exclude_uris', '');
-      while ($num_retrieved < $num_requested && $num_responses < OKHUB_HARD_LIMIT_ASSETS && $more_results) {
-        $response = $okhubapi->search($type, OKHUB_HUB_SOURCE_CODE, $api_key, $format, $num_requested, $age_results, $offset, $filter_params);
-        if ($response->isEmpty()) {
-          $error_message = __('No content retrieved by the API call. Please check your active filters.');
-          if ($response->isError()) {
-            $error_message .= $response->getErrorMessage();
-          }
-          okhubapi_register_error('okhub', $error_message, 'OkhubImporter::retrieve_content', 'warning');
-          $more_results = FALSE;
-        }
-        else {
-          $assets_retrieved = $response->getResults();
-          if (!empty($assets_retrieved)) {
-            $num_responses += count($assets_retrieved);
-            foreach ($assets_retrieved as $asset) {
-              if (!okhub_exclude_asset($asset, $dataset, $exclude_uris) && okhub_has_language_content($asset, $dataset, $language_filters)) {
-                $content[] = $asset;
-                $num_retrieved++;
-              }
-              $offset++; 
-              if ($num_retrieved == $num_requested) {
-                break;
-              }
-            }
-            $total_results = $response->getTotalResults();
-            $more_results = ($total_results > $offset);
+          if (okhub_has_content($dataset, $asset)) {
+            $content_available = TRUE;
+            @$okhub_import_dates[$dataset][$asset] = $date;
+            wp_schedule_single_event(time(), 'okhub_import_batches', array('assets', $dataset, $asset, $force_update, 0));
           }
           else {
-            $more_results = FALSE;
-          }
+            $output .= "<p>No $asset available for $dataset.</p>";
+          }          
         }
       }
-    } else { // is country, region, theme or document_type. - TODO: ADD PREFERRED/FILTER LANGUAGES FOR CATEGORY LABELS.
-      if (okhub_is_hierarchical($type) && ($top_level_categories = okhubapi_variable_get('okhub', 'top_level_categories', OKHUB_DEFAULT_TOP_LEVEL))) {
-          $filter_params[OKHUB_API_PARAMETER_TOP_LEVEL] = $top_level_categories;
-      }
-      $num_requested = 0;
-      $age_results = 0;
-      $start_offset = 0;
-      $response = $okhubapi->search($type, OKHUB_HUB_SOURCE_CODE, $api_key, $format, $num_requested, $age_results, $start_offset, $filter_params);
-      if ($response->isError()) {
-        $error_message = __('No content retrieved by the API call. ') . $response->getErrorMessage();
-        okhubapi_register_error('okhub', $error_message, 'OkhubImporter::retrieve_content', 'warning');
-        $content = FALSE;
-      }
-      else {
-        $content = $response->getResults();
-      }
     }
-    return $content;
+    if ($content_available) {
+      okhubapi_variable_set('okhub', 'import_in_progress', TRUE);      
+      $output .= '<p>'.sprintf(__('Import continue in background. Please go back to the <a href="%s">importer\'s page</a> in order to follow the progress.'), $importer_url).'</p>';
+    }
+    else {
+      $output .= '<p>'.sprintf(__('Nothing to import. Go back to the <a href="%s">importer\'s page</a>.'), $importer_url).'</p>';
+    }
+    echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);    
+    okhubapi_variable_set('okhub', 'import_dates', $okhub_import_dates);
   }
 
 } // Class OkhubImport
 
 } // If WP_Importer exists
 
-//----------------------- End of OkhubImporter class definition -------------------------
+//----------------------- End of OkhubImporter class definition ------------------------
+
+//------------------------ Display functions -------------------------------------------
+
+// Display header.
+function okhub_import_header() {
+	echo '<div class="narrow">';
+  echo '<div class="okhub-wrap">';
+	screen_icon();
+	echo '<h2>'.__('OKHub Content - Importer', 'okhub-importer').'</h2>';
+}
+
+// Display footer.
+function okhub_import_footer() {
+	echo '</div>';
+	echo '</div>';
+}
+
+// Display a summary of the importing process.
+function okhub_import_display_results() {
+  $display = okhubapi_variable_get('okhub', 'import_display', array());
+  foreach ($display as $dataset => $display_types) {
+    foreach ($display_types as $show_progress) {
+      echo $show_progress;
+    }
+  }
+}
 
 //------------------------ Functions to manage imported content ------------------------
+
+add_action('okhub_import_batches', 'okhub_import_batches', 10, 6);
+
+function okhub_import_batches($import_type, $dataset, $type, $force_update, $start_offset) {
+  switch ($import_type) {
+    case 'assets':
+      list($num_retrieved, $total_results) = okhub_import_assets($dataset, $type, $start_offset, $force_update);
+      $num_requested = okhubapi_variable_get('okhub', 'num_items', OKHUB_API_NUM_ITEMS);
+      if (!$num_requested) {
+        $num_requested = $total_results; // $num_requested == 0 means 'all'.
+      }
+      break;
+    case 'categories':
+      list($num_retrieved, $total_results) = okhub_import_categories($dataset, $type, $start_offset, $force_update);
+      $num_requested = $total_results;
+      break;    
+  }
+  $import_results = okhubapi_variable_get('okhub', 'import_results', array());
+  $incremental_imports = okhubapi_variable_get('okhub', 'incremental_imports', FALSE);  
+  $num_processed_so_far = array_sum($import_results[$dataset][$type]);
+  $num_new_so_far = $import_results[$dataset][$type]['new'];
+  if ($import_type == 'categories') {
+    $continue = TRUE;
+  }
+  elseif ($incremental_imports) {
+    $continue = ($num_new_so_far < $num_requested && $num_processed_so_far < $total_results);
+  }
+  else {
+    $continue = ($num_processed_so_far < $num_requested && $num_processed_so_far < $total_results);    
+  }
+  $new_offset = $start_offset+min($num_requested, OKHUB_BATCH_SIZE);
+  if ($continue && $total_results > $new_offset) { // Schedule the next batch.
+    wp_schedule_single_event(time()+$i*OKHUB_BATCH_SIZE, 'okhub_import_batches', array($import_type, $dataset, $type, $force_update, $new_offset));
+  }
+  else {
+    okhubapi_variable_set('okhub', 'import_in_progress', FALSE);
+  }
+}
+
+function okhub_import_in_progress() {
+  return okhubapi_variable_get('okhub', 'import_in_progress', FALSE);
+}
+
+// Import assets.
+function okhub_import_assets($dataset, $type, $offset, $force_update) {
+  $assets = array();
+  $total_results = 0;
+  if (okhub_has_content($dataset, $type)) {
+    $incremental_imports = okhubapi_variable_get('okhub', 'incremental_imports', FALSE);     
+    $type_name = okhub_get_type_name($type, TRUE);
+    $dataset_acronym = okhub_get_dataset_acronym($dataset);
+    $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
+    $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes', array_keys(okhub_languages())); 
+    $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
+    $updated_assets = okhubapi_variable_get('okhub', 'updated_assets', OKHUB_UPDATED_ASSETS);
+    $display = okhubapi_variable_get('okhub', 'import_display', array());      
+    $display[$dataset][$type] = '';
+    $import_results = okhubapi_variable_get('okhub', 'import_results', array());
+    if (!$offset) {
+      $import_results[$dataset][$type] = array('new' => 0, 'updated' => 0, 'skipped' => 0);
+    }
+    $num_processed = array_sum($import_results[$dataset][$type]);    
+    $output = __('Importing') . " $dataset_acronym " . __($type_name) . '...';
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-title-output-importer', '', '', $output);
+    // Call the API
+    list($assets, $total_results) = okhub_retrieve_content($dataset, $type, $offset);
+    $output = __('Processed ').$num_processed.__(' out of ').$total_results;
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
+    $output = __('New: ').$import_results[$dataset][$type]['new'].__(' items');
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
+    $output = __('Updated: ').$import_results[$dataset][$type]['updated'].__(' items');
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
+    $output = __('Skipped: ').$import_results[$dataset][$type]['skipped'].__(' items');
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
+    $num_requested = okhubapi_variable_get('okhub', 'num_items', OKHUB_API_NUM_ITEMS);
+    if (!$num_requested) {
+      $num_requested = $total_results; // $num_requested == 0 means 'all'.
+    }
+    if ($assets) {
+      $post_type = okhub_custom_type_name($type);
+      if (post_type_exists($post_type)) {
+        $display[$dataset][$type] .= '<ul>';          
+        foreach ($assets as $asset) {
+          $titles = okhub_api_value_languages($asset, OKHUB_API_FN_TITLE, $dataset, $preferred_languages);
+          $hub_id = okhub_get_api_value($asset, OKHUB_API_FN_ITEM_ID);
+          if ($titles && $hub_id) {
+            $title = current($titles);
+            if ($post_id = okhub_get_id_by_meta('post', OKHUB_WP_FN_HUB_ITEM_ID, $hub_id)) { // The item already exists in WP (maybe not for the same dataset).
+              $post_status = get_post_status($post_id);
+              $post_sources = okhub_get_post_sources($post_id);
+              if (in_array($dataset, $post_sources) && ($post_status == 'pending' || $post_status == 'publish')) { // There's content for this source and the status is pending or publish.
+                // Compare latest hub timestamp in WP for the source with the hub timestamp in the API response.
+                // It's necessary to consider the source because the post could have been updated more recently for another source.
+                if (!$force_update) {
+                  $old_hub_timestamp = get_post_meta($post_id, okhub_source_field_name(OKHUB_WP_FN_HUB_TIMESTAMP, $dataset), TRUE);
+                  if (!is_numeric($old_hub_timestamp)) {
+                    $old_hub_timestamp = strtotime($old_hub_timestamp);
+                  }
+                  $current_hub_timestamp = okhub_get_api_value($asset, OKHUB_API_FN_TIMESTAMP);
+                  if (!is_numeric($current_hub_timestamp)) {
+                    $current_hub_timestamp = strtotime($current_hub_timestamp);
+                  }
+                  $force_update = (!$old_hub_timestamp || !$current_hub_timestamp || $current_hub_timestamp > $old_hub_timestamp);
+                }
+                if ($force_update) { // The date is not defined, the new version is more recent or the update was forced.
+                  switch ($updated_assets) {
+                    case 'overwrite':   
+                      $post_id = okhub_update_asset($post_id, $dataset, $post_type, $asset);
+                      if ($post_id) {
+                        $output = '<li> <a href="'.admin_url("post.php?post=$post_id&action=edit").'">'.$title.'</a>' . ' - ' . __('updated');
+                        $display[$dataset][$type] .= okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
+                        $import_results[$dataset][$type]['updated']++;
+                      }
+                      else {
+                        okhubapi_register_error('okhub', __('The post could not be updated for item with id ') . $hub_id, 'OkhubImporter::import_assets', 'warning');
+                      }
+                      break;
+                    case 'skip':
+                      $output = '<li> <a href="'.admin_url("post.php?post=$post_id&action=edit").'">'.$title.'</a>' . ' - ' . __('skipped (most recent version already imported)');
+                      $display[$dataset][$type] .= okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
+                      $import_results[$dataset][$type]['skipped']++;
+                      break;
+                  }
+                }
+                else { // There's content for this source and the version being imported is not more recent and it's currently published or pending. We always skip it in this case.
+                  $output = '<li> <a href="'.admin_url("post.php?post=$post_id&action=edit").'">'.$title.'</a>' . ' - ' . __('skipped (most recent version already imported)');
+                  $display[$dataset][$type] .= okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
+                  $import_results[$dataset][$type]['skipped']++;
+                }
+              }
+              else { // The existing version is not published or pending - or there's no content for this source. We update it.
+                if ($post_id = okhub_update_asset($post_id, $dataset, $post_type, $asset)) {
+                  $output = '<li> <a href="'.admin_url("post.php?post=$post_id&action=edit").'">'.$title.'</a>' . ' - ' . __('updated');
+                  $display[$dataset][$type] .= okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
+                  $import_results[$dataset][$type]['updated']++;
+                }
+                else {
+                  okhubapi_register_error('okhub', __('The post could not be updated for item with id ') . $hub_id, 'OkhubImporter::import_assets', 'warning');
+                }
+              }
+            }
+            else { // The item does not exist. Create it.
+              if ($post_id = okhub_insert_asset($dataset, $post_type, $asset)) {
+                $output = '<li> <a href="'.admin_url("post.php?post=$post_id&action=edit").'">'.$title.'</a>' . ' - ' . __('new');
+                $display[$dataset][$type] .= okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
+                $import_results[$dataset][$type]['new']++;
+              }
+              else {
+                okhubapi_register_error('okhub', __('A new post could not be created for item with id ') . $hub_id, 'OkhubImporter::import_assets', 'warning');
+              }
+            }
+          }
+          $num_processed = array_sum($import_results[$dataset][$type]);        
+          if (($incremental_imports && $import_results[$dataset][$type]['new'] == $num_requested) || (!$incremental_imports && $num_processed == $num_requested)) {
+            break; // No need to keep processing the assets in this batch.
+          }
+        }
+        $display[$dataset][$type] .= '</ul>';
+      }
+    }
+  }
+  else {
+    $output = __('No ') . __(strtolower($type_name)) . ' found in the hub for the source "' .$dataset_acronym. '"';
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-warning okhub-title-output-importer', '', '', $output);
+  }
+  okhubapi_variable_set('okhub', 'import_results', $import_results);
+  okhubapi_variable_set('okhub', 'import_display', $display);
+  return array(count($assets), $total_results);
+}
+
+// Import categories.
+function okhub_import_categories($dataset, $type, $offset, $force_update) { // $force_update is not used now. Categories are always updated.
+  $categories = array();
+  $total_results = 0;
+  if (okhub_has_content($dataset, $type)) {
+    $type_name = okhub_get_type_name($type, TRUE);
+    $dataset_acronym = okhub_get_dataset_acronym($dataset);    
+    $default_language = okhubapi_variable_get('okhub', 'default_language', OKHUB_DEFAULT_LANGUAGE);
+    $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes',  array_keys(okhub_languages())); 
+    $preferred_languages = array_unique(array_merge(array($default_language), $language_filters));
+    $display = okhubapi_variable_get('okhub', 'import_display', array());      
+    $display[$dataset][$type] = '';
+    $import_results = okhubapi_variable_get('okhub', 'import_results', array());   
+    if (!$offset) {  
+      $import_results[$dataset][$type] = array('new' => 0, 'updated' => 0, 'skipped' => 0);
+    }
+    $num_processed = array_sum($import_results[$dataset][$type]);
+    $output = __('Importing') . " $dataset_acronym " . __($type_name) . '...';
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-title-output-importer', '', '', $output);
+    // Call the API
+    list($categories, $total_results) = okhub_retrieve_content($dataset, $type, $offset);
+    $output = __('Processed ').$num_processed.__(' out of ').$total_results;
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
+    $output = __('New: ').$import_results[$dataset][$type]['new'].__(' items');
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
+    $output = __('Updated: ').$import_results[$dataset][$type]['updated'].__(' items');
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);
+    $output = __('Skipped: ').$import_results[$dataset][$type]['skipped'].__(' items');
+    $display[$dataset][$type] .= okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);    
+    if ($categories) {
+      $taxonomy_name = okhub_custom_taxonomy_name($dataset, $type);
+      if (taxonomy_exists($taxonomy_name)) {
+        $display[$dataset][$type] .= '<ul>';
+        foreach ($categories as $category) {
+          $hub_id = okhub_get_api_value($category, OKHUB_API_FN_ITEM_ID);
+          $category_names = okhub_get_category_names_language($category, $dataset, $preferred_languages);
+          $category_name = current($category_names);
+          if ($hub_id && $category_name) {
+            if ($term_id = okhub_get_id_by_meta(OKHUB_TAXONOMY, OKHUB_WP_FN_HUB_ITEM_ID, $hub_id)) { // The taxonomy term exists.
+              // Update the term corresponding to the category.
+              $output = '<li>' . $category_name . ' - ' . __('updated');
+              $display[$dataset][$type] .= okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
+              if (okhub_update_category($term_id, $dataset, $taxonomy_name, $category)) {
+                $import_results[$dataset][$type]['updated']++;
+              }
+              else {
+                okhubapi_register_error('okhub', __('The term could not be updated for category with id ') . $hub_id, 'import_categories', 'warning');
+              }
+            }
+            else {
+              // Create a new term for the category.
+              $output = '<li>' . $category_name . ' - ' . __('new');
+              $display[$dataset][$type] .= okhub_div_field_wrapper('okhub-item-output-importer', '', '', $output);
+              $term_id = okhub_insert_category($dataset, $taxonomy_name, $category);
+              if ($term_id) {
+                $import_results[$dataset][$type]['new']++ ;
+              }
+              else {
+                okhubapi_register_error('okhub', __('A new term could not be created for category with id ') . $hub_id, 'import_categories', 'warning');
+              }
+            }
+          }
+        }
+        $display[$dataset][$type] .= '</ul>';
+      }
+    }
+  }
+  okhubapi_variable_set('okhub', 'import_results', $import_results);  
+  okhubapi_variable_set('okhub', 'import_display', $display);
+  return array(count($categories), $total_results);
+}
+
+// Call the API to retrieve content of the indicated type, using the the plugin settings.
+function okhub_retrieve_content($dataset, $type, $start_offset) {
+  //$incremental_imports = okhubapi_variable_get('okhub', 'incremental_imports', FALSE);  
+  $content = array();
+  $okhubapi = new OkhubApiWrapper;
+  $api_key = okhubapi_variable_get('okhub', 'api_key', '');
+  $format = 'full';
+  $filter_params = array();
+  // Source filter
+  $filter_params[OKHUB_API_PARAMETER_SOURCES] = $dataset;
+  $is_asset = ($type == 'documents' || $type == 'organisations');
+  if ($is_asset) {
+    $num_requested = okhubapi_variable_get('okhub', 'num_items', OKHUB_API_NUM_ITEMS); 
+    if (!$num_requested || $num_requested > OKHUB_BATCH_SIZE) {
+      $num_requested = OKHUB_BATCH_SIZE;
+    }
+    $age_results = okhubapi_variable_get('okhub', 'age_new_assets', OKHUB_API_AGE_NEW_ASSETS); // Always 0 now as it's currently not supported and it's commented in the settings page.
+    $language_filters = okhubapi_variable_get('okhub', 'language_filters_codes', array()); 
+    $okhub_import_query = okhubapi_variable_get('okhub', 'import_query', '');
+    $okhub_import_countries_assets = okhubapi_variable_get('okhub', $dataset . '_countries_assets', array());
+    $okhub_import_regions_assets = okhubapi_variable_get('okhub', $dataset . '_regions_assets', array());
+    $okhub_import_themes_assets = okhubapi_variable_get('okhub', $dataset . '_themes_assets', array());
+    // Generic query
+    if ($okhub_import_query) {
+      $search_params = explode(',', $okhub_import_query);
+      foreach ($search_params as $search_param) {
+        $param = explode('=', trim($search_param));
+        $key = $param[0];
+        $value = $param[1];
+        $filter_params[$key] = $value;
+      }
+    }
+    // Category-based filters
+    if (!empty($okhub_import_countries_assets)) {
+      $filter_params[OKHUB_API_PARAMETER_COUNTRY_ID] = implode('|', $okhub_import_countries_assets);
+    }
+    if (!empty($okhub_import_regions_assets)) {
+      $filter_params[OKHUB_API_PARAMETER_REGION_ID] = implode('|', $okhub_import_regions_assets);
+    }
+    if (!empty($okhub_import_themes_assets)) {
+      $filter_params[OKHUB_API_PARAMETER_THEME_ID] = implode('|', $okhub_import_themes_assets);
+    }
+    $filter_params[OKHUB_SORT_ORDER] = OKHUB_SORT_FIELD;          
+    // Document-specific filters
+    if ($type == 'documents') {
+      $okhub_import_authors_assets = okhubapi_variable_get('okhub', 'import_authors_assets', '');
+      if ($okhub_import_authors_assets) {
+        $authors = explode(',', $okhub_import_authors_assets);
+        $list_authors = implode('|', array_map('trim', $authors));
+        $filter_params[OKHUB_API_PARAMETER_AUTHOR] = $list_authors;
+      }
+      $okhub_import_publishers_assets = okhubapi_variable_get('okhub', 'import_publishers_assets', '');
+      if ($okhub_import_publishers_assets) {
+        $publishers = explode(',', $okhub_import_publishers_assets);
+        $list_publishers = implode('|', array_map('trim', $publishers));
+        $filter_params['publisher_name'] = $list_publishers;
+      }
+      // Only retrieve content in these languages.
+      // The results are further refined (below) considering whether they have 'relevant' content (title, description) in these languages.
+      if ($language_filters) {
+        $language_codes = implode('|', $language_filters);
+        $filter_params[OKHUB_API_PARAMETER_LANGUAGES] = $language_codes;
+      }
+    }
+    // Keep only those assets whose URIs don't match the ones to exclude and that have 'relevant' content in the selected languages.
+    // Paginate until we get the number requested.
+    $num_responses = 0;
+    $num_retrieved = 0;
+    $total_results = 0;
+    $offset = $start_offset;
+    $more_results = TRUE;
+    $exclude_uris = okhubapi_variable_get('okhub', 'exclude_uris', '');
+    while ($num_retrieved < $num_requested && $num_responses < OKHUB_BATCH_SIZE && $more_results) {
+      $response = $okhubapi->search($type, OKHUB_HUB_SOURCE_CODE, $api_key, $format, $num_requested, $age_results, $offset, $filter_params);    
+      if ($response->isEmpty()) {
+        $error_message = __('No content retrieved by the API call. Please check your active filters.');
+        if ($response->isError()) {
+          $error_message .= $response->getErrorMessage();
+        }
+        okhubapi_register_error('okhub', $error_message, 'OkhubImporter::retrieve_content', 'warning');
+        $more_results = FALSE;
+      }
+      else {
+        $assets_retrieved = $response->getResults();
+        if (!empty($assets_retrieved)) {
+          $num_responses += count($assets_retrieved);
+          foreach ($assets_retrieved as $asset) {
+            if (!okhub_exclude_asset($asset, $dataset, $exclude_uris) && okhub_has_language_content($asset, $dataset, $language_filters)) {
+              $content[] = $asset;
+              $num_retrieved++;
+            }
+            $offset++; 
+            if ($num_retrieved == $num_requested) {
+              break;
+            }
+          }
+          $total_results = $response->getTotalResults();
+          $more_results = ($total_results > $offset);
+        }
+        else {
+          $more_results = FALSE;
+        }
+      }
+    }
+  }
+  else { // is country, region, theme or document_type. - TODO: ADD PREFERRED/FILTER LANGUAGES FOR CATEGORY LABELS.
+    if (okhub_is_hierarchical($type) && ($top_level_categories = okhubapi_variable_get('okhub', 'top_level_categories', OKHUB_DEFAULT_TOP_LEVEL))) {
+        $filter_params[OKHUB_API_PARAMETER_TOP_LEVEL] = $top_level_categories;
+    }
+    $num_requested = OKHUB_BATCH_SIZE;
+    $age_results = 0;
+    $response = $okhubapi->search($type, OKHUB_HUB_SOURCE_CODE, $api_key, $format, $num_requested, $age_results, $start_offset, $filter_params);
+    if ($response->isError()) {
+      $error_message = __('No content retrieved by the API call. ') . $response->getErrorMessage();
+      okhubapi_register_error('okhub', $error_message, 'OkhubImporter::retrieve_content', 'warning');
+    }
+    else {
+      $content = $response->getResults();
+      $total_results = $response->getTotalResults();        
+    }
+  }
+  return array($content, $total_results);
+}
 
 // Create new post with imported asset.
 function okhub_insert_asset($dataset, $post_type, $asset) {
@@ -1003,14 +1074,14 @@ function okhub_schedule_imports() {
   if ($frequency_assets) {
     foreach ($import_assets as $assets_type => $enabled) {
       if ($enabled) {
-        $schedule_result = wp_schedule_event(time(), $frequency_assets, 'okhub_scheduled_events', array($assets_type));
+        $schedule_result = wp_schedule_event(time()+6*60*60, $frequency_assets, 'okhub_scheduled_events', array($assets_type));
       }
     }
   }
   if ($frequency_categories && $okhub_new_categories) {
     foreach ($import_categories as $categories_type => $enabled) {
       if ($enabled) {
-        $schedule_result = wp_schedule_event(time(), $frequency_categories, 'okhub_scheduled_events', array($categories_type));
+        $schedule_result = wp_schedule_event(time()+6*60*60, $frequency_categories, 'okhub_scheduled_events', array($categories_type));
       }
     }
   }
@@ -1018,32 +1089,28 @@ function okhub_schedule_imports() {
 
 // Call to periodic imports.
 function okhub_run_periodic_imports($type) {
-  $date = date(DATE_RFC822);
-  $okhub_import_dates = okhubapi_variable_get('okhub', 'import_dates', array());
-  $okhub_import_results = okhubapi_variable_get('okhub', 'import_results', array());
-  $okhub_new_categories = okhubapi_variable_get('okhub', 'import_new_categories', OKHUB_NEW_CATEGORIES);
-  $datasets = okhub_selected_datasets();
-  $categories = okhub_categories();
-  $assets = okhub_assets();
-  $importer = new OkhubImporter();
-  if (in_array($type, $assets)) {
-    foreach ($datasets as $dataset) {
-      $importer->terms[$dataset][$type] = array('new' => 0, 'updated' => 0);
-      $importer->import_assets($dataset, $type);
-      $okhub_import_dates[$dataset][$type] = $date;
-      $okhub_import_results[$dataset][$type] = $importer->terms[$dataset][$type];
+  if (!okhub_import_in_progress()) {
+    $date = date(DATE_RFC822);
+    $okhub_import_dates = okhubapi_variable_get('okhub', 'import_dates', array());
+    $okhub_new_categories = okhubapi_variable_get('okhub', 'import_new_categories', OKHUB_NEW_CATEGORIES);
+    $datasets = okhub_selected_datasets();
+    $categories = okhub_categories();
+    $assets = okhub_assets();
+    $importer = new OkhubImporter();
+    if (in_array($type, $assets)) {
+      foreach ($datasets as $dataset) {
+        $okhub_import_dates[$dataset][$type] = $date;        
+        wp_schedule_single_event(time(), 'okhub_import_batches', array('assets', $dataset, $type, FALSE, 0));
+      }
     }
-  }
-  elseif (in_array($type, $categories) && $okhub_new_categories) {
-    foreach ($datasets as $dataset) {
-      $importer->terms[$dataset][$type] = array('new' => 0, 'updated' => 0);
-      $importer->import_categories($dataset, $type);
-      $okhub_import_dates[$dataset][$type] = $date;
-      $okhub_import_results[$dataset][$type] = $importer->terms[$dataset][$type];
+    elseif (in_array($type, $categories) && $okhub_new_categories) {
+      foreach ($datasets as $dataset) {
+        $okhub_import_dates[$dataset][$type] = $date;
+        wp_schedule_single_event(time(), 'okhub_import_batches', array('categories', $dataset, $type, FALSE, 0));        
+      }
     }
+    okhubapi_variable_set('okhub', 'import_dates', $okhub_import_dates);
   }
-  okhubapi_variable_set('okhub', 'import_dates', $okhub_import_dates);
-  okhubapi_variable_set('okhub', 'import_results', $okhub_import_results);
 }
 
 // Unschedule all the import events

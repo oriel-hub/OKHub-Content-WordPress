@@ -260,6 +260,7 @@ class OKHub_Widget extends WP_Widget {
           $filter_params[$key] = $value;
         }
       }
+      $filter_params[OKHUB_SORT_ORDER] = OKHUB_SORT_FIELD;      
       if ($apply_filters) {
         $age_results = okhubapi_variable_get('okhub', 'age_new_assets', OKHUB_API_AGE_NEW_ASSETS);
         $import_query = okhubapi_variable_get('okhub', 'import_query', '');

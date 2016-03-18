@@ -150,15 +150,15 @@ function okhub_importer_form() {
         if (okhub_has_content($set, $type)) {
           $new = (isset($latest_import_results[$set][$type]) ? $latest_import_results[$set][$type]['new'] : 0);
           $updated = (isset($latest_import_results[$set][$type]) ? $latest_import_results[$set][$type]['updated'] : 0);
-          $message .= okhub_get_dataset_acronym($set) . ' ' . okhub_get_type_name($type, TRUE) . ' imported on ' . $date . ': ' . $new . ' new, ' . $updated . ' updated' . '<br />';
+          $skipped = (isset($latest_import_results[$set][$type]) ? $latest_import_results[$set][$type]['skipped'] : 0);         
+          $message .= okhub_get_dataset_acronym($set) . ' ' . okhub_get_type_name($type, TRUE) . ' imported on ' . $date . ': ' . $new . ' new, ' . $updated . ' updated, ' . $skipped . ' skipped' .'<br />';
         }
       }
     }
     okhub_show_message($message);
   }
-  $message = __('Please note that it can take some time to import a large volume of content. Do not stop your browser.');
-  okhub_show_message($message);
   ?>
+  
   <form method="post" action="admin.php?import=okhub_importer&step=1">
     <table class="okhub-table okhub-types">
       <!-- Types of content to import -->
@@ -206,7 +206,8 @@ function okhub_importer_form() {
       <td>
         <ul>
           <li> <?php echo '<i>' . __('Import from: ') . '</i>' . '<strong>' . implode(', ', $selected_datasets) . '</strong>'; ?>
-          <li> <?php echo '<i>' . __('Number of documents/organisations: ') . '</i>' . '<strong>' . (($num_items = okhubapi_variable_get('okhub', 'num_items', OKHUB_API_NUM_ITEMS)) ? $num_items : 'Not specified') . '</strong>'; ?>
+          <li> <?php echo '<i>' . __('Number of documents/organisations: ') . '</i>' . '<strong>' . (($num_items = okhubapi_variable_get('okhub', 'num_items', OKHUB_API_NUM_ITEMS)) ? $num_items : 'Import all') . '</strong>'; ?>
+          <li> <?php echo '<i>' . __('Import incrementally: ') . '</i>' . '<strong>' . (($incremental_imports = okhubapi_variable_get('okhub', 'incremental_imports', FALSE)) ? 'Yes' : 'No') . '</strong>'; ?>
           <li> <?php echo '<i>' . __('Updated resources: ') . '</i>' . '<strong>' . okhubapi_variable_get('okhub', 'updated_assets', OKHUB_UPDATED_ASSETS) . '</strong>'; ?>
           <li> <?php echo '<i>' . __('Username assigned to imported content: ') . '</i>' . '<strong>' . okhubapi_variable_get('okhub', 'import_user', OKHUB_IMPORT_USER) . '</strong>'; ?>
           <li> <?php echo '<i>' . __('Import only top-level categories: ') . '</i>' . '<strong>' . (($okhub_top_level_categories = okhubapi_variable_get('okhub', 'top_level_categories', OKHUB_DEFAULT_TOP_LEVEL)) ? $okhub_top_level_categories : 'All levels') . '</strong>' ?>
@@ -284,10 +285,13 @@ function okhub_render_form() {
   $okhub_datasets_names = okhub_datasets_names_with_content();
   $okhub_api_key_validated = okhubapi_variable_get('okhub', 'api_key_validated', FALSE);
   $okhub_num_items_options = array_combine(range(10, OKHUB_MAX_REQUESTED_ASSETS, 10), range(10, OKHUB_MAX_REQUESTED_ASSETS, 10));
+  $okhub_num_items_options['0'] = '--- Import all ---';
 	?>
   <!--div class="okhub-wrap"-->
-	<div class="okhub-wrap">
-
+  <script>
+    blockAdminPage();
+  </script>
+	<div class="okhub-wrap" >
 		<!-- Display Plugin Icon, Header, and Description -->
 		<div class="icon32" id="icon-options-general"></div>
 		<h2><?php _e('OKHub Content - Settings'); ?></h2>
@@ -366,24 +370,32 @@ function okhub_render_form() {
           <th scope="row"><?php _e('Number of documents/organisations'); ?></th>
           <td>
             <?php echo okhub_select_box('okhub_options[num_items]', 'okhub_num_items', $okhub_num_items_options, array(okhubapi_variable_get('okhub', 'num_items', OKHUB_API_NUM_ITEMS))); ?>
-            <!--input type="text" size="10" name="okhub_options[num_items]" value="<?php echo okhubapi_variable_get('okhub', 'num_items', OKHUB_API_NUM_ITEMS); ?>" /-->
             <p class="description">
             <?php _e('Number of documents and/or organisations to retrieve <u>from each selected dataset</u> in each call to the OKHub API.'); ?>
             </p>
           </td>
         </tr>
 
+        <!-- Incremental imports. -->        
+        <?php $okhub_incremental_imports = okhubapi_variable_get('okhub', 'incremental_imports', FALSE); ?>
+        <tr valign="top">
+          <th scope="row"><?php _e('Import incrementally'); ?></th>
+          <td>
+            <label><input id="okhub_incremental_imports" name="okhub_options[incremental_imports]" type="checkbox" <?php echo ($okhub_incremental_imports ? 'checked="yes"' : '');  ?>/> Import incrementally</label>
+            <p class="description">
+            <?php _e('If checked, imports will be done incrementally. The importer will continue retrieving previous items from the OKHub until it reaches the requested number or there are no more items available.'); ?><br>
+            </p>
+          </td>
+        </tr>        
+
         <!-- Updated assets -->
         <tr>
           <th scope="row"><?php _e('Updated resources'); ?></th>
           <td>
-            <!--?php echo okhub_select_box('okhub_options[updated_assets]', 'okhub_updated_assets', array('skip' => __('Always skip'), 'overwrite' => __('Always overwrite'), 'keep' => __('Keep both (pending of review)')), array(okhubapi_variable_get('okhub', 'updated_assets', OKHUB_UPDATED_ASSETS))); ?-->
             <?php echo okhub_select_box('okhub_options[updated_assets]', 'okhub_updated_assets', array('overwrite' => __('Overwrite'), 'skip' => __('Skip')), array(okhubapi_variable_get('okhub', 'updated_assets', OKHUB_UPDATED_ASSETS))); ?>
             <p class="description">
             <?php _e('Please indicate what to do with existing resources that have been updated in the source and have a more recent date_updated value than the one imported previously.'); ?>
             <br/>
-            <!--?php _e('If "keep both" is selected, a new unpublished post will be created with the new values to be processed manually.'); ?-->
-            <!--br/-->
             <?php _e('Please note that this will only be applied to documents and organisations. Categories will always be overwritten.'); ?>
             </p>
           </td>
@@ -828,7 +840,7 @@ function okhub_render_form() {
     </div>	<!-- UI tabs -->	
 
       <p class="okhub-button submit">
-        <input name="okhub_options[submit_save]" type="submit" class="button-primary" value="<?php _e('Save changes') ?>" onClick="hideImportMessage()"/>
+        <input name="okhub_options[submit_save]" type="submit" class="button-primary" value="<?php _e('Save changes') ?>"/>
       </p>
 
     <?php } else { // If API key is not validated ?>
@@ -839,8 +851,7 @@ function okhub_render_form() {
       </p>
     <?php } ?>
 		</form>
-  </div>	<!-- okhub-wrap -->	
-  <!--/div--><!-- wrap -->
+  </div>
 	<?php	
 }
 

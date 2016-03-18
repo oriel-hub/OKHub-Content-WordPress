@@ -59,6 +59,7 @@ require_once('includes/okhub.html.inc');
 require_once('includes/okhub.interface.inc');
 require_once('includes/okhub.metadata.inc');
 require_once('includes/okhub.importer.inc');
+//require_once('includes/okhub.importer_request.inc');
 require_once('includes/okhub.widget.inc');
 
 //-------------------------------- Set-up hooks ---------------------------------
@@ -70,9 +71,9 @@ add_action('admin_menu', 'okhub_add_options_page');
 add_action('admin_menu', 'okhub_add_menu', 9);
 add_action('widgets_init', 'okhub_register_widget');
 add_action('admin_notices', 'okhub_admin_notices');
-add_action('wp_enqueue_scripts', 'okhub_add_stylesheet');
-add_action('admin_enqueue_scripts', 'okhub_add_admin_stylesheet');
-add_action('admin_enqueue_scripts', 'okhub_add_javascript');
+add_action('wp_enqueue_scripts', 'okhub_add_stylesheet', 5);
+add_action('admin_enqueue_scripts', 'okhub_add_admin_stylesheet', 5);
+add_action('admin_enqueue_scripts', 'okhub_add_javascript', 6);
 add_filter('plugin_action_links', 'okhub_plugin_action_links', 10, 2);
 add_filter('manage_okhub_documents_posts_columns', 'okhub_posts_columns');
 add_filter('manage_okhub_organisations_posts_columns', 'okhub_posts_columns');
@@ -366,6 +367,8 @@ function okhub_add_javascript($hook) {
     wp_print_scripts( 'jquery-ui-tabs' );
     wp_register_script('okhub_chosen_javascript', OKHUB_SCRIPTS_PATH . '/chosen/chosen.jquery.js');
     wp_enqueue_script('okhub_chosen_javascript');
+    wp_register_script('okhub_blockui_javascript', OKHUB_SCRIPTS_PATH . '/blockui/jquery.blockUI.js');
+    wp_enqueue_script('okhub_blockui_javascript');    
     wp_register_script('okhub_jqwidgets_jqxcore_javascript', OKHUB_SCRIPTS_PATH . '/jqwidgets/jqwidgets/jqxcore.js');
     wp_enqueue_script('okhub_jqwidgets_jqxcore_javascript');
     wp_register_script('okhub_jqwidgets_jqxbuttons_javascript', OKHUB_SCRIPTS_PATH . '/jqwidgets/jqwidgets/jqxbuttons.js');

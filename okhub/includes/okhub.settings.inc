@@ -62,17 +62,19 @@ define('OKHUB_WP_FN_HIDDEN_NAME_LANGUAGE', '_current_name_language');
 /* ---- Other settings. Most of these settings can and should be changed through the plugin's administrative page. ---- */
 
 define('OKHUB_MAX_REQUESTED_ASSETS', 100); // Maximum number of documents/organisations that can be selected for each datasource to be imported at once.
-define('OKHUB_HARD_LIMIT_ASSETS', 300); // The search space is three times the max. number of items, in order not to keep searching forever assets that might not match the filters.
+define('OKHUB_HARD_LIMIT_ASSETS', 300); // Used in the widget.
+define('OKHUB_BATCH_SIZE', 25); // Size batches to import content.
 define('OKHUB_DEFAULT_DATASET', 'eldis');
 define('OKHUB_DEFAULT_LANGUAGE', 'en');
 define('OKHUB_DEFAULT_POST_STATUS', 'publish');
 //define('OKHUB_DEFAULT_DATASET_ADMIN', 'all');
 define('OKHUB_IMPORT_USER', 'OKHUB');
-define('OKHUB_TEMPLATES_DIR', 'templates');
+define('OKHUB_USER_EMAIL','okhub@ids.ac.uk');
+define('OKHUB_SORT_ORDER', 'sort_desc');
+define('OKHUB_SORT_FIELD', 'timestamp'); // Most recently added/updated first.
 define('OKHUB_DEFAULT_TOP_LEVEL', 'true');
 define('OKHUB_IMPORT_RECURRENCE_ASSETS', 'daily');
 define('OKHUB_IMPORT_RECURRENCE_CATEGORIES', 'monthly');
-define('OKHUB_USER_EMAIL','okhub@ids.ac.uk');
 define('OKHUB_REQUIRED_TRANSLATABLE_FIELDS', 'title,description'); // To be added to admin interface.
 define('OKHUB_ADDITIONAL_TRANSLATABLE_FIELDS_DOCUMENTS', 'publisher_country');
 define('OKHUB_ADDITIONAL_TRANSLATABLE_FIELDS_ORGANISATIONS', 'name');
@@ -83,6 +85,7 @@ define('OKHUB_VERBOSE_IMPORT', TRUE);
 define('OKHUB_INCLUDE_IMPORTED_DOCUMENTS', TRUE);
 define('OKHUB_INCLUDE_IMPORTED_ORGANISATIONS', TRUE);
 define('OKHUB_TAGS', TRUE);
+define('OKHUB_TEMPLATES_DIR', 'templates');
 // Widget default values.
 define('OKHUB_WIDGET_ASSETS_TYPE', 'documents');
 define('OKHUB_WIDGET_TITLE', 'OKHub updates');

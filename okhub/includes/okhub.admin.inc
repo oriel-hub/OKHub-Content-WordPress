@@ -389,10 +389,18 @@ function okhub_admin_main() {
   if ($okhub_setup_done) {
     okhub_after_config();
   }
-  okhub_render_form();
-  $importer_url = 'import.php?import=okhub_importer';
-  $message = '<div class="okhub_message">You can change the plugin configuration options above or proceed to the <input type="button" class="button-primary" value="manual import page" onclick="window.location=\''.$importer_url.'\';"></div>';
-  okhub_show_message($message);
+  if (okhub_import_in_progress()) {
+    $output = __('Import in process... ');
+    $importer_url = admin_url() . 'admin.php?import=okhub_importer';
+    $output .= sprintf(__('Go to <a href="%s">the importer\'s page</a> in order to follow the progress.'), $importer_url);
+    echo okhub_div_field_wrapper('notice notice-success okhub-results-import', '', '', $output);  
+  }
+  else {
+    okhub_render_form();
+    $importer_url = 'import.php?import=okhub_importer';
+    $message = '<div class="okhub_message">You can change the plugin configuration options above or proceed to the <input type="button" class="button-primary" value="manual import page" onclick="window.location=\''.$importer_url.'\';"></div>';
+    okhub_show_message($message);
+  }
 }
 
 // Display registered error messages
@@ -483,6 +491,7 @@ function okhub_validate_options($input) {
     $input['include_imported_documents'] = (isset($input['include_imported_documents']) && $input['include_imported_documents']);
     $input['include_imported_organisations'] = (isset($input['include_imported_organisations']) && $input['include_imported_organisations']);
     $input['import_new_categories'] = (isset($input['import_new_categories']) && $input['import_new_categories']);
+    $input['incremental_imports'] = (isset($input['incremental_imports']) && $input['incremental_imports']);
     $input['import_tags'] = (isset($input['import_tags']) && $input['import_tags']);
     if (empty($input['selected_datasets'])) {
       $error = TRUE;
@@ -544,6 +553,7 @@ function okhub_validate_options($input) {
     $input['include_imported_documents'] = okhubapi_variable_get('okhub', 'include_imported_documents', OKHUB_INCLUDE_IMPORTED_DOCUMENTS);
     $input['include_imported_organisations'] = okhubapi_variable_get('okhub', 'include_imported_organisations', OKHUB_INCLUDE_IMPORTED_ORGANISATIONS);
     $input['import_new_categories'] = okhubapi_variable_get('okhub', 'import_new_categories', OKHUB_NEW_CATEGORIES);
+    $input['incremental_imports'] = okhubapi_variable_get('okhub', 'incremental_imports', FALSE);
     $input['import_tags'] = okhubapi_variable_get('okhub', 'import_tags', OKHUB_TAGS);
   }
   if ($error) {
