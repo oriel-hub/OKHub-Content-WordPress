@@ -3,7 +3,7 @@
 Plugin Name: OKHub Content (Beta)
 Plugin URI: http://developer.okhub.org/okhub_plugins/
 Description: Imports and/or displays content from the Open Knowledge Hub via the OKHub API (http://api.okhub.org/).
-Version: 1.0.0
+Version: 1.0.1
 Author: Institute of Development Studies (IDS)
 Author URI: http://www.ids.ac.uk/
 License: GPLv3
